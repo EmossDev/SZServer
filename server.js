@@ -15,7 +15,7 @@ const C = {
 };
 
 const PORT = process.env.PORT || 8080;
-const HOST = '0.0.0.0';
+const HOST = '127.0.0.1';
 
 // HTTP ve WebSocket Sunucusu
 const server = http.createServer((req, res) => {
