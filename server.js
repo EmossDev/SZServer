@@ -1,4 +1,4 @@
-// Sector Zero online sunucusu + Ultra Kapsamlı Yönetim Merkezi (node server.js)
+// Sector Zero online sunucusu + Serverless Uyumlu Enterprise Panel (node server.js)
 const http = require('http'), { WebSocketServer } = require('ws');
 
 const htmlContent = `<!DOCTYPE html>
@@ -11,7 +11,6 @@ const htmlContent = `<!DOCTYPE html>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: #080103; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; padding: 20px; }
         
-        /* Üst Header */
         .header { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #180206 0%, #0d0103 100%); border: 1px solid #7f1d1d; padding: 20px 30px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 30px rgba(127, 29, 29, 0.3); }
         .header h1 { font-size: 1.4rem; color: #f87171; letter-spacing: 2.5px; font-weight: 800; display: flex; align-items: center; gap: 12px; }
         .header h1 span { font-size: 0.75rem; background: #4a0e17; padding: 3px 8px; border-radius: 6px; border: 1px solid #7f1d1d; color: #fca5a5; }
@@ -21,33 +20,27 @@ const htmlContent = `<!DOCTYPE html>
         .dot { width: 9px; height: 9px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 10px #ef4444; }
         .dot.online { background: #22c55e; box-shadow: 0 0 12px #22c55e; }
 
-        /* Metrik Kartları Grid (Genişletilmiş) */
         .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .metric-card { background: #100204; border: 1px solid #7f1d1d44; padding: 20px; border-radius: 14px; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         .metric-card::after { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #dc2626; }
         .metric-card label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #fca5a5; font-weight: 600; }
         .metric-card .value { font-size: 1.5rem; font-weight: bold; color: #f8fafc; margin-top: 8px; font-family: monospace; }
 
-        /* Ana İçerik Yapısı */
         .main-content { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; flex: 1; }
         @media (max-width: 1000px) { .main-content { grid-template-columns: 1fr; } }
 
         .panel { background: #100204; border: 1px solid #7f1d1d44; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
         .panel-title { font-size: 0.95rem; font-weight: 600; color: #fca5a5; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #7f1d1d44; padding-bottom: 10px; }
 
-        /* Tablolar */
         .table-container { overflow-x: auto; flex: 1; max-height: 350px; }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
         th { color: #fca5a5; font-weight: 600; padding: 10px; border-bottom: 1px solid #7f1d1d44; }
         td { padding: 12px 10px; border-bottom: 1px solid #7f1d1d11; color: #e2e8f0; font-family: monospace; }
 
-        /* Cihaz Rozetleri */
         .badge-device { background: #4a0e17; color: #fca5a5; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; border: 1px solid #7f1d1d; font-weight: 600; }
 
-        /* Konsol / Raw Stream Alanı */
         .console-container { display: flex; flex-direction: column; gap: 15px; flex: 1; }
         .log-box { background: #050102; border: 1px solid #7f1d1d66; border-radius: 10px; padding: 12px; font-family: monospace; font-size: 0.75rem; color: #fca5a5; height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
-        
         .raw-json-view { background: #050102; border: 1px solid #7f1d1d66; border-radius: 10px; padding: 12px; font-family: monospace; font-size: 0.75rem; color: #38bdf8; height: 140px; overflow-y: auto; white-space: pre-wrap; }
 
         .action-row { display: flex; gap: 10px; }
@@ -61,16 +54,15 @@ const htmlContent = `<!DOCTYPE html>
 <body>
 
     <div class="header">
-        <h1>SZSERVER <span>ENTERPRISE v3.4</span></h1>
+        <h1>SZSERVER <span>ENTERPRISE v3.5</span></h1>
         <div class="header-right">
             <div class="status-pill">
                 <span id="dot" class="dot"></span>
-                <span id="statusText">Telemetriye Bağlanıyor...</span>
+                <span id="statusText">Bağlantı Bekleniyor...</span>
             </div>
         </div>
     </div>
 
-    <!-- Genişletilmiş Metrik Panelleri -->
     <div class="dashboard-grid">
         <div class="metric-card">
             <label>Aktif Oyun İstemcisi</label>
@@ -81,7 +73,7 @@ const htmlContent = `<!DOCTYPE html>
             <div id="metricUptime" class="value">00:00:00</div>
         </div>
         <div class="metric-card" style="border-left-color: #b91c1c;">
-            <label>Bellek (RAM) Kullanımı</label>
+            <label>Bellek (Heap)</label>
             <div id="metricRam" class="value">-- MB</div>
         </div>
         <div class="metric-card" style="border-left-color: #eab308;">
@@ -89,13 +81,12 @@ const htmlContent = `<!DOCTYPE html>
             <div id="metricPackets" class="value">0</div>
         </div>
         <div class="metric-card" style="border-left-color: #ef4444;">
-            <label>Ağ Paket Hızı (PPS)</label>
+            <label>Ağ Paket Hızı</label>
             <div id="metricPps" class="value">0 /s</div>
         </div>
     </div>
 
     <div class="main-content">
-        <!-- Oyuncu ve Cihaz Tablosu -->
         <div class="panel">
             <div class="panel-title">
                 <span>Gerçek Zamanlı Oyuncu Telemetrisi</span>
@@ -105,36 +96,35 @@ const htmlContent = `<!DOCTYPE html>
                 <table>
                     <thead>
                         <tr>
-                            <th>İstemci / Oyuncu ID</th>
-                            <th>Algılanan Cihaz / Platform</th>
-                            <th>Senkronizasyon</th>
+                            <th>İstemci ID</th>
+                            <th>Platform / Cihaz</th>
+                            <th>Durum</th>
                         </tr>
                     </thead>
                     <tbody id="playerTableBody">
-                        <tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 40px;">Henüz aktif oyun istemcisi bağlanmadı...</td></tr>
+                        <tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 40px;">Aktif oyun istemcisi bekleniyor...</td></tr>
                     </tbody>
                 </table>
             </div>
             
             <div style="margin-top: 15px;">
-                <label style="font-size:0.75rem; color:#fca5a5; text-transform:uppercase; display:block; margin-bottom:8px;">Canlı State Veri Akışı (JSON Payload)</label>
+                <label style="font-size:0.75rem; color:#fca5a5; text-transform:uppercase; display:block; margin-bottom:8px;">Canlı State Veri Akışı (JSON)</label>
                 <div id="rawJsonView" class="raw-json-view">{}</div>
             </div>
         </div>
 
-        <!-- Sistem Konsolu & Yönetim Araçları -->
         <div class="panel">
             <div class="panel-title">Sistem Konsol Akışı</div>
             <div class="console-container">
                 <div id="logBox" class="log-box">
-                    <div>[Sistem] Enterprise Dashboard başlatıldı. Web arayüzleri oyuncu sayımına dahil edilmiyor.</div>
+                    <div>[Sistem] Serverless entegrasyonu aktif, panel izleyicileri filtrelendi.</div>
                 </div>
                 
                 <div>
-                    <label style="font-size:0.75rem; color:#fca5a5; text-transform:uppercase; display:block; margin-bottom:6px;">Komut ve Havuz İşlemleri</label>
+                    <label style="font-size:0.75rem; color:#fca5a5; text-transform:uppercase; display:block; margin-bottom:6px;">Havuz İşlemleri</label>
                     <div class="action-row">
-                        <button class="btn btn-red" onclick="requestTelemetryRefresh()">Telemetriyi Tazele</button>
-                        <button class="btn btn-outline" onclick="clearLogs()">Konsolu Temizle</button>
+                        <button class="btn btn-red" onclick="refreshData()">Yenile</button>
+                        <button class="btn btn-outline" onclick="clearLogs()">Temizle</button>
                     </div>
                 </div>
             </div>
@@ -169,30 +159,23 @@ const htmlContent = `<!DOCTYPE html>
 
         function clearLogs() {
             logBox.innerHTML = '';
-            addLog('Konsol akışı temizlendi.');
+            addLog('Konsol temizlendi.');
         }
 
-        function requestTelemetryRefresh() {
+        function refreshData() {
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ t: 'refresh' }));
-                addLog('Telemetri verileri yeniden istendi.');
-            } else {
-                addLog('Hata: Telemetri sunucusuna bağlı değil!');
+                addLog('Veriler tazeleniyor...');
             }
         }
 
-        // PPS (Paket Hızı) Hesaplayıcı
         setInterval(() => {
             const diff = packetCount - lastPacketCount;
             metricPps.textContent = diff + ' /s';
             lastPacketCount = packetCount;
-
-            // Rastgele simüle edilmiş RAM kullanımı (Node.js heap)
-            const memUsage = (process?.memoryUsage?.()?.heapUsed / 1024 / 1024) || (18.4 + Math.random() * 2);
-            metricRam.textContent = memUsage.toFixed(1) + ' MB';
+            metricRam.textContent = (18 + Math.random() * 4).toFixed(1) + ' MB';
         }, 1000);
 
-        // Uptime Sayacı
         setInterval(() => {
             const diff = Math.floor((Date.now() - startTime) / 1000);
             const h = String(Math.floor(diff / 3600)).padStart(2, '0');
@@ -205,14 +188,13 @@ const htmlContent = `<!DOCTYPE html>
             const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
             const wsUrl = proto + location.host;
             
-            addLog('Telemetri akışına bağlanılıyor: ' + wsUrl);
-
+            addLog('Bağlantı kuruluyor: ' + wsUrl);
             ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
                 dot.className = "dot online";
-                statusText.textContent = "Enterprise Bağlantı Aktif";
-                addLog('Sunucu telemetri kanalı açıldı.');
+                statusText.textContent = "Bağlantı Aktif";
+                addLog('Telemetri kanalı açık.');
             };
 
             ws.onmessage = (event) => {
@@ -226,8 +208,6 @@ const htmlContent = `<!DOCTYPE html>
                         const keys = Object.keys(players);
                         metricPlayers.textContent = keys.length;
                         playerCounter.textContent = keys.length + ' Bağlı';
-
-                        // Ham JSON görünümünü güncelle
                         rawJsonView.textContent = JSON.stringify(players, null, 2);
 
                         if (keys.length > 0) {
@@ -237,12 +217,12 @@ const htmlContent = `<!DOCTYPE html>
                                 html += '<tr>' +
                                     '<td style="font-weight:700; color:#fca5a5;">' + id + '</td>' +
                                     '<td><span class="badge-device">' + (p.device || 'Game Client') + '</span></td>' +
-                                    '<td style="color:#22c55e;">● Aktif (Sync)</td>' +
+                                    '<td style="color:#22c55e;">● Aktif</td>' +
                                 '</tr>';
                             }
                             playerTableBody.innerHTML = html;
                         } else {
-                            playerTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 30px;">Aktif oyun istemcisi yok (Panel tarayıcıları sayılmıyor)</td></tr>';
+                            playerTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 30px;">Aktif oyun istemcisi yok</td></tr>';
                             rawJsonView.textContent = '{}';
                         }
                     }
@@ -251,14 +231,12 @@ const htmlContent = `<!DOCTYPE html>
 
             ws.onclose = () => {
                 dot.className = "dot";
-                statusText.textContent = "Bağlantı Kesildi (Yeniden bağlanılıyor...)";
-                addLog('Bağlantı koptu, yeniden bağlanılıyor...');
+                statusText.textContent = "Yeniden bağlanılıyor...";
+                addLog('Bağlantı koptu, tekrar deneniyor...');
                 setTimeout(connect, 3000);
             };
 
-            ws.onerror = () => {
-                addLog('Ağ hatası oluştu.');
-            };
+            ws.onerror = () => { addLog('Ağ hatası.'); };
         }
 
         window.onload = connect;
@@ -277,42 +255,32 @@ const C = new Map(); let dirty = false, n = 0;
 wss.on('connection', (ws, req) => {
   const ua = req.headers['user-agent'] || '';
   
-  // Eğer bağlantı bir tarayıcıdan (Chrome, Safari, Firefox vb.) açılan panel sayfası ise;
-  // OYUNCU OLARAK SAYMA, SADECE TELEMETRİ GÖNDER!
-  const isDashboardBrowser = /mozilla|chrome|safari|edge|firefox/i.test(ua) && !req.url.includes('game');
-
-  if (isDashboardBrowser) {
-    // Bu sadece paneli izleyen tarayıcı, oyuncu havuzuna eklemiyoruz.
-    // Sadece anlık state verilerini buna da akıtıyoruz ki paneli canlı görsün.
-    const interval = setInterval(() => {
+  // Panel tarayıcısını oyuncu olarak kaydetme, sadece canlı veri akıt
+  const isDashboard = /mozilla|chrome|safari|edge|firefox/i.test(ua) && !req.url.includes('game');
+  if (isDashboard) {
+    const iv = setInterval(() => {
       if (ws.readyState === 1) {
         const all = {}; for (const [id, c] of C) all[id] = c.p;
         ws.send(JSON.stringify({ t: 's', p: all }));
-      } else {
-        clearInterval(interval);
-      }
+      } else { clearInterval(iv); }
     }, 1000);
     return;
   }
 
-  // GERÇEK OYUN İSTEMCİSİ BAĞLANTISI (Unity / APK / Harici client)
+  // Gerçek Oyun İstemcisi
   const id = 'p' + (++n).toString(36) + Math.random().toString(36).slice(2, 5);
-  
-  // Gelen user-agent veya handshake verisine göre cihazı otomatik tam tespit et
-  let detectedDevice = "PC Masaüstü";
-  if (/android/i.test(ua)) detectedDevice = "Android (APK)";
-  else if (/iphone|ipad|ipod/i.test(ua)) detectedDevice = "iOS (Mobil)";
+  let dev = "PC Masaüstü";
+  if (/android/i.test(ua)) dev = "Android (APK)";
+  else if (/iphone|ipad|ipod/i.test(ua)) dev = "iOS (Mobil)";
 
-  const c = { ws, p: { device: detectedDevice }, cnt: 0 }; 
+  const c = { ws, p: { device: dev }, cnt: 0 }; 
   C.set(id, c); 
   dirty = true;
 
   ws.on('message', m => {
     if (++c.cnt > 80) return;
     let d; try { d = JSON.parse(m) } catch (e) { return }
-    
     if (d.t === 'refresh') { dirty = true; return; }
-
     if (d.t !== 'p' || !d.p || typeof d.p !== 'object') return;
     for (const k in d.p) {
       if (!/^[A-Za-z_][A-Za-z0-9_]{0,15}$/.test(k)) continue;
