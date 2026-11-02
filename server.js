@@ -1,4 +1,4 @@
-// Sector Zero online sunucusu + Entegre Arayüz (node server.js)
+// Sector Zero online sunucusu + Modern Oyun Lobisi (node server.js)
 const http = require('http'), { WebSocketServer } = require('ws');
 
 const htmlContent = `<!DOCTYPE html>
@@ -6,108 +6,129 @@ const htmlContent = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sector Zero // Multiplayer Hub</title>
+    <title>Sector Zero // Game Lobby</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
-        body { background-color: #05070d; color: #00ffcc; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .container { width: 100%; max-width: 600px; background: rgba(11, 15, 25, 0.95); border: 1px solid #00ffcc44; border-radius: 12px; box-shadow: 0 0 25px rgba(0, 255, 204, 0.1); overflow: hidden; }
-        .header { background: #0f172a; padding: 15px 20px; border-bottom: 1px solid #00ffcc33; display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { font-size: 1.1rem; letter-spacing: 2px; color: #fff; }
-        .status-badge { font-size: 0.75rem; padding: 4px 12px; border-radius: 20px; background: #ff336622; color: #ff3366; border: 1px solid #ff336644; font-weight: bold; }
-        .status-badge.online { background: #00ffcc22; color: #00ffcc; border-color: #00ffcc55; }
-        .content { padding: 20px; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; font-size: 0.8rem; color: #8892b0; margin-bottom: 6px; letter-spacing: 1px; }
-        .input-row { display: flex; gap: 10px; }
-        input { flex: 1; background: #07090e; border: 1px solid #1e293b; color: #fff; padding: 12px; border-radius: 6px; font-size: 0.9rem; outline: none; }
-        input:focus { border-color: #00ffcc; }
-        button { background: #00ffcc; color: #05070d; border: none; padding: 0 20px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #00cca3; }
-        button.disconnect { background: #ff3366; color: #fff; }
-        .console { background: #07090e; border: 1px solid #1e293b; border-radius: 6px; height: 180px; padding: 12px; overflow-y: auto; font-size: 0.8rem; color: #a8b2d1; display: flex; flex-direction: column; gap: 6px; }
-        .log-entry { display: flex; gap: 10px; word-break: break-all; }
-        .log-time { color: #475569; }
-        .log-msg.success { color: #00ffcc; }
-        .log-msg.error { color: #ff3366; }
-        .log-msg.info { color: #38bdf8; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #080b11; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .wrapper { width: 100%; max-width: 650px; background: #0f172a; border: 1px solid #1e293b; border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); overflow: hidden; }
+        .hero { background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); padding: 30px 25px; text-align: center; border-bottom: 1px solid #1e293b; position: relative; }
+        .hero h1 { font-size: 1.8rem; letter-spacing: 3px; color: #38bdf8; font-weight: 800; margin-bottom: 8px; text-shadow: 0 0 15px rgba(56, 189, 248, 0.4); }
+        .hero p { font-size: 0.9rem; color: #94a3b8; letter-spacing: 1px; }
+        
+        .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ef4444; margin-right: 6px; box-shadow: 0 0 8px #ef4444; transition: 0.3s; }
+        .status-dot.active { background: #22c55e; box-shadow: 0 0 10px #22c55e; }
+
+        .content { padding: 25px; }
+        .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .info-card { background: #111827; border: 1px solid #1f2937; padding: 15px; border-radius: 10px; text-align: center; }
+        .info-card span { display: block; font-size: 1.3rem; font-weight: bold; color: #38bdf8; margin-top: 5px; }
+        .info-card label { font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; }
+
+        .btn-container { display: flex; gap: 12px; }
+        .btn { flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.3s; letter-spacing: 1px; }
+        .btn-primary { background: #38bdf8; color: #080b11; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3); }
+        .btn-primary:hover { background: #0ea5e9; transform: translateY(-2px); }
+        .btn-danger { background: #ef4444; color: #fff; display: none; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
+        .btn-danger:hover { background: #dc2626; }
+
+        .footer-note { text-align: center; margin-top: 20px; font-size: 0.8rem; color: #64748b; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>SZSERVER // TERMINAL</h1>
-            <div id="statusBadge" class="status-badge">KOPUK</div>
+
+    <div class="wrapper">
+        <div class="hero">
+            <h1>SECTOR ZERO</h1>
+            <p><span id="dot" class="status-dot"></span><span id="statusText">Sunucu Bağlantısı Bekleniyor...</span></p>
         </div>
         <div class="content">
-            <div class="input-group">
-                <label for="wsUrl">WEBSOCKET BAĞLANTI ADRESİ</label>
-                <div class="input-row">
-                    <input type="text" id="wsUrl" value="wss://sz-server-snowy.vercel.app">
-                    <button id="connectBtn" onclick="toggleConnection()">BAĞLAN</button>
+            <div class="card-grid">
+                <div class="info-card">
+                    <label>Oyuncu Kimliğin (ID)</label>
+                    <span id="clientId">-</span>
+                </div>
+                <div class="info-card">
+                    <label>Aktif Oyuncular</label>
+                    <span id="activeCount">0</span>
                 </div>
             </div>
-            <div class="input-group">
-                <label>CANLI PAKET AKIŞI</label>
-                <div id="console" class="console">
-                    <div class="log-entry"><span class="log-time">[00:00:00]</span><span class="log-msg info">Arayüz yüklendi. Bağlantı bekleniyor...</span></div>
-                </div>
+
+            <div class="btn-container">
+                <button id="connectBtn" class="btn btn-primary" onclick="toggleConnection()">OYUNA BAĞLAN</button>
+                <button id="disconnectBtn" class="btn btn-danger" onclick="toggleConnection()">BAĞLANTIYI KES</button>
+            </div>
+
+            <div class="footer-note">
+                SZServer Core v1.0 // Multi-user Realtime Engine
             </div>
         </div>
     </div>
+
     <script>
         let ws = null;
-        const consoleEl = document.getElementById('console');
-        const statusBadge = document.getElementById('statusBadge');
+        const statusDot = document.getElementById('dot');
+        const statusText = document.getElementById('statusText');
+        const clientIdEl = document.getElementById('clientId');
+        const activeCountEl = document.getElementById('activeCount');
         const connectBtn = document.getElementById('connectBtn');
-        const wsUrlInput = document.getElementById('wsUrl');
-
-        function log(msg, type = 'info') {
-            const time = new Date().toTimeString().split(' ')[0];
-            const div = document.createElement('div');
-            div.className = 'log-entry';
-            div.innerHTML = '<span class="log-time">[' + time + ']</span><span class="log-msg ' + type + '">' + msg + '</span>';
-            consoleEl.appendChild(div);
-            consoleEl.scrollTop = consoleEl.scrollHeight;
-        }
+        const disconnectBtn = document.getElementById('disconnectBtn');
 
         function toggleConnection() {
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.close();
                 return;
             }
-            const url = wsUrlInput.value;
-            log('Bağlanılıyor: ' + url + ' ...', 'info');
+
+            // Vercel domain adresini otomatik algıla ve wss protokolüne çevir
+            const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
+            const wsUrl = proto + location.host;
+
+            statusText.textContent = "Bağlanıyor...";
+
             try {
-                ws = new WebSocket(url);
+                ws = new WebSocket(wsUrl);
+
                 ws.onopen = () => {
-                    statusBadge.textContent = "ONLINE";
-                    statusBadge.className = "status-badge online";
-                    connectBtn.textContent = "AYRIL";
-                    connectBtn.className = "disconnect";
-                    log("Sunucuya başarıyla bağlandı!", "success");
+                    statusDot.className = "status-dot active";
+                    statusText.textContent = "Sunucuya Bağlandı";
+                    connectBtn.style.display = "none";
+                    disconnectBtn.style.display = "block";
                 };
+
                 ws.onmessage = (event) => {
                     try {
                         const data = JSON.parse(event.data);
                         if (data.t === 'hi') {
-                            log('Oturum Açıldı -> Client ID: ' + data.id, 'success');
-                        } else if (data.t === 's') {
-                            log('State paketi alındı (Aktif oyuncu: ' + Object.keys(data.p).length + ')', 'info');
+                            clientIdEl.textContent = data.id;
+                        } else if (data.t === 'p') {
+                            // Aktif oyuncu sayısını güncelle
+                            activeCountEl.textContent = Object.keys(data.p).length;
                         }
-                    } catch (e) {
-                        log('Ham veri: ' + event.data, 'info');
-                    }
+                    } catch (e) {}
                 };
+
                 ws.onclose = () => {
-                    statusBadge.textContent = "KOPUK";
-                    statusBadge.className = "status-badge";
-                    connectBtn.textContent = "BAĞLAN";
-                    connectBtn.className = "";
-                    log("Sunucu bağlantısı kapandı.", "error");
+                    statusDot.className = "status-dot";
+                    statusText.textContent = "Bağlantı Kesildi";
+                    clientIdEl.textContent = "-";
+                    activeCountEl.textContent = "0";
+                    connectBtn.style.display = "block";
+                    disconnectBtn.style.display = "none";
                 };
-                ws.onerror = () => { log("WebSocket bağlantı hatası oluştu.", "error"); };
-            } catch (e) { log('Hata: ' + e.message, "error"); }
+
+                ws.onerror = () => {
+                    statusText.textContent = "Bağlantı Hatası!";
+                };
+
+            } catch (e) {
+                statusText.textContent = "Kritik Hata!";
+            }
         }
+
+        // Sayfa açıldığında otomatik bağlanmayı dene
+        window.onload = () => {
+            toggleConnection();
+        };
     </script>
 </body>
 </html>`;
