@@ -20,17 +20,25 @@
         .metric-card::after { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #dc2626; }
         .metric-card label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #fca5a5; font-weight: 600; }
         
-        /* Gradient Geçişli "Owned by EmossDev" Yazısı */
+        /* Sürekli hareket eden akıcı animasyonlu gradient yazı */
         .metric-card .gradient-text { 
             font-size: 1.3rem; 
             font-weight: 800; 
             margin-top: 8px; 
             font-family: monospace; 
             letter-spacing: 0.5px;
-            background: linear-gradient(135deg, #fca5a5 0%, #ef4444 50%, #ffffff 100%);
+            background: linear-gradient(270deg, #fca5a5, #ef4444, #ffffff, #ef4444, #fca5a5);
+            background-size: 300% 300%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            animation: gradientMove 4s ease infinite;
             text-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         .panel { background: #100204; border: 1px solid #7f1d1d44; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
