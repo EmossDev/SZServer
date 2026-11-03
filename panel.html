@@ -9,8 +9,7 @@
         body { background-color: #060102; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; padding: 20px; }
         
         .header { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #180206 0%, #080102 100%); border: 1px solid #7f1d1d; padding: 20px 30px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 30px rgba(127, 29, 29, 0.3); }
-        .header h1 { font-size: 1.4rem; color: #f87171; letter-spacing: 2.5px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
-        .header h1 span { font-size: 0.65rem; background: #4a0e17; padding: 3px 8px; border-radius: 6px; border: 1px solid #7f1d1d; color: #fca5a5; }
+        .header h1 { font-size: 1.4rem; color: #f87171; letter-spacing: 2.5px; font-weight: 800; display: flex; align-items: center; }
         
         .status-pill { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; background: #1f060b; padding: 8px 16px; border-radius: 20px; border: 1px solid #991b1b; }
         .dot { width: 9px; height: 9px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 10px #ef4444; }
@@ -33,15 +32,12 @@
         th { color: #fca5a5; font-weight: 600; padding: 10px; border-bottom: 1px solid #7f1d1d44; }
         td { padding: 12px 10px; border-bottom: 1px solid #7f1d1d11; color: #e2e8f0; font-family: monospace; }
 
-        /* NCS Müzik Çalar Tasarımı */
+        /* Ses Akış Bilgisi Tasarımı */
         .player-box { display: flex; flex-direction: column; gap: 12px; }
         .track-info { background: #080103; border: 1px solid #7f1d1d66; padding: 15px; border-radius: 10px; font-family: monospace; }
         .track-title { font-size: 0.85rem; color: #f87171; font-weight: bold; margin-bottom: 6px; }
-        .track-status { font-size: 0.75rem; color: #fca5a5; }
-
-        /* Görünür Mini YouTube Player (Tarayıcının engellemesini önler) */
-        .video-wrapper { width: 100%; height: 160px; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid #7f1d1d44; margin-top: 5px; }
-        #yt-player { width: 100%; height: 100%; }
+        .track-status { font-size: 0.75rem; color: #22c55e; display: flex; align-items: center; gap: 6px; }
+        .track-status::before { content: ''; width: 7px; height: 7px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e; }
 
         .footer { margin-top: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #64748b; border-top: 1px solid #7f1d1d33; padding-top: 15px; }
         .footer span { color: #f87171; font-weight: bold; font-family: monospace; }
@@ -50,7 +46,7 @@
 <body>
 
     <div class="header">
-        <h1>SZSERVER <span>CONTROL CENTER</span></h1>
+        <h1>SZSERVER</h1>
         <div class="status-pill">
             <span id="dot" class="dot"></span>
             <span id="statusText">Bağlanıyor...</span>
@@ -91,18 +87,13 @@
             </div>
         </div>
 
-        <!-- Sağ: NCS Müzik Çalar -->
+        <!-- Sağ: Otomatik Arka Plan Ses Akışı -->
         <div class="panel">
             <div class="panel-title">NCS Müzik Akışı</div>
             <div class="player-box">
                 <div class="track-info">
-                    <div id="trackTitle" class="track-title">Parça: Yükleniyor...</div>
-                    <div id="trackStatus" class="track-status">Durum: Oynatıcı hazır</div>
-                </div>
-
-                <!-- Tarayıcının engellememesi için görünür mini video alanı -->
-                <div class="video-wrapper">
-                    <div id="yt-player"></div>
+                    <div id="trackTitle" class="track-title">Parça: NCS Electronic Stream</div>
+                    <div id="trackStatus" class="track-status">Otomatik Akış Aktif</div>
                 </div>
             </div>
         </div>
@@ -113,61 +104,37 @@
         <div>Developer by <span style="color: #f87171;">EmossDev</span></div>
     </div>
 
-    <script src="https://www.youtube.com/iframe_api"></script>
-
     <script>
         let ws = null;
         let startTime = Date.now();
-        let player;
+        let audioCtx = null;
+        let audioElem = null;
 
-        const ncsPlaylist = [
-            { id: "J2X5mJ3HDYE", name: "DEAF KEV - Invincible [NCS Release]" },
-            { id: "K4DyBUG242c", name: "Cartoon - On & On (feat. Daniel Levi) [NCS Release]" },
-            { id: "CSvFpBOe8eY", name: "Spectre - Alan Walker [NCS Release]" },
-            { id: "B7xai5u_tnk", name: "Elektronomia - Sky High [NCS Release]" },
-            { id: "m2rjovJ2dEg", name: "Janji - Heroes Tonight (feat. Johnning) [NCS Release]" },
-            { id: "n8wpw5U5m5k", name: "Tobu - Candyland [NCS Release]" }
-        ];
-        let currentTrackIndex = 0;
+        // Doğrudan çalışan saf ses akış adresi (5ms içinde anında tetiklenir)
+        const audioStreamUrl = "https://stream.nocopyrightsounds.com/";
 
-        function onYouTubeIframeAPIReady() {
-            player = new YT.Player('yt-player', {
-                height: '100%',
-                width: '100%',
-                videoId: ncsPlaylist[currentTrackIndex].id,
-                playerVars: {
-                    'autoplay': 1,
-                    'controls': 1,
-                    'loop': 0
-                },
-                events: {
-                    'onReady': onPlayerReady,
-                    'onStateChange': onPlayerStateChange
-                }
-            });
-        }
+        function initInstantAudio() {
+            try {
+                audioElem = new Audio();
+                audioElem.src = audioStreamUrl;
+                audioElem.crossOrigin = "anonymous";
+                audioElem.autoplay = true;
+                audioElem.loop = true;
 
-        function onPlayerReady(event) {
-            updateTrackInfo();
-            // Tarayıcı kuralı gereği ilk tıklamada sesi ve videoyu tamamen açar
-            document.body.addEventListener('click', () => {
-                if (player && player.getPlayerState() !== YT.PlayerState.PLAYING) {
-                    player.playVideo();
-                }
-            }, { once: true });
-        }
-
-        function onPlayerStateChange(event) {
-            if (event.data === YT.PlayerState.ENDED) {
-                currentTrackIndex = (currentTrackIndex + 1) % ncsPlaylist.length;
-                player.loadVideoById(ncsPlaylist[currentTrackIndex].id);
-                updateTrackInfo();
-            }
-        }
-
-        function updateTrackInfo() {
-            document.getElementById('trackTitle').textContent = "Parça: " + ncsPlaylist[currentTrackIndex].name;
-            document.getElementById('trackStatus').textContent = "Durum: Çalıyor / Aktif";
+                // Anında oynatma denemesi (5ms)
+                setTimeout(() => {
+                    const playPromise = audioElem.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(() => {
+                            // Tarayıcı kısıtlaması durumunda sessiz modda başlatıp sesi açar
+                            audioElem.muted = true;
+                            audioElem.play().then(() => {
+                                setTimeout(() => { audioElem.muted = false; }, 100);
+                            });
+                        });
+                    }
+                }, 5);
+            } catch (e) {}
         }
 
         // Uptime Sayacı
@@ -179,7 +146,7 @@
             metricUptime.textContent = h + ':' + m + ':' + s;
         }, 1000);
 
-        // WebSocket Bağlantısı
+        // WebSocket Bağlantısı (Saf server.js ile tam uyumlu)
         function connect() {
             const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
             ws = new WebSocket(proto + location.host);
@@ -222,7 +189,10 @@
             };
         }
 
-        window.onload = connect;
+        window.onload = () => {
+            initInstantAudio();
+            connect();
+        };
     </script>
 </body>
 </html>
