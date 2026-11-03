@@ -6,10 +6,10 @@
     <title>Sector Zero // Control Center</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: #060102; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; padding: 20px; }
+        body { background-color: #060102; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; padding: 20px; padding-bottom: 90px; }
         
         .header { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #180206 0%, #080102 100%); border: 1px solid #7f1d1d; padding: 20px 30px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 30px rgba(127, 29, 29, 0.3); }
-        .header h1 { font-size: 1.4rem; color: #f87171; letter-spacing: 2.5px; font-weight: 800; display: flex; align-items: center; }
+        .header h1 { font-size: 1.4rem; color: #f87171; letter-spacing: 2.5px; font-weight: 800; }
         
         .status-pill { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; background: #1f060b; padding: 8px 16px; border-radius: 20px; border: 1px solid #991b1b; }
         .dot { width: 9px; height: 9px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 10px #ef4444; }
@@ -21,9 +21,6 @@
         .metric-card label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #fca5a5; font-weight: 600; }
         .metric-card .value { font-size: 1.5rem; font-weight: bold; color: #f8fafc; margin-top: 8px; font-family: monospace; }
 
-        .main-content { display: grid; grid-template-columns: 1fr 380px; gap: 20px; flex: 1; }
-        @media (max-width: 900px) { .main-content { grid-template-columns: 1fr; } }
-
         .panel { background: #100204; border: 1px solid #7f1d1d44; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
         .panel-title { font-size: 0.95rem; font-weight: 600; color: #fca5a5; margin-bottom: 15px; border-bottom: 1px solid #7f1d1d44; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
 
@@ -32,10 +29,19 @@
         th { color: #fca5a5; font-weight: 600; padding: 10px; border-bottom: 1px solid #7f1d1d44; }
         td { padding: 12px 10px; border-bottom: 1px solid #7f1d1d11; color: #e2e8f0; font-family: monospace; }
 
-        .player-box { display: flex; flex-direction: column; gap: 12px; }
-        .track-info { background: #080103; border: 1px solid #7f1d1d66; padding: 15px; border-radius: 10px; font-family: monospace; }
-        .track-title { font-size: 0.85rem; color: #f87171; font-weight: bold; margin-bottom: 6px; }
-        .track-status { font-size: 0.75rem; color: #22c55e; }
+        /* Altta Sabit, Açılıp Kapanabilen Müzik Çalar */
+        .music-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #100204; border-top: 1px solid #7f1d1d; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 -4px 20px rgba(0,0,0,0.7); z-index: 1000; transition: transform 0.3s ease; }
+        .music-bar.minimized { transform: translateY(calc(100% - 40px)); }
+        
+        .music-left { display: flex; align-items: center; gap: 15px; overflow: hidden; }
+        .music-title { font-size: 0.85rem; color: #f87171; font-weight: bold; font-family: monospace; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 400px; }
+        
+        .music-controls { display: flex; align-items: center; gap: 10px; }
+        .btn-m { background: #7f1d1d; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; cursor: pointer; }
+        .btn-m:hover { background: #b91c1c; }
+        .btn-toggle { background: transparent; border: 1px solid #7f1d1d; color: #fca5a5; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
+
+        #youtube-player-container { display: none; }
 
         .footer { margin-top: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #64748b; border-top: 1px solid #7f1d1d33; padding-top: 15px; }
         .footer span { color: #f87171; font-weight: bold; font-family: monospace; }
@@ -57,43 +63,29 @@
             <div id="metricPlayers" class="value">0</div>
         </div>
         <div class="metric-card" style="border-left-color: #991b1b;">
-            <label>Çalışma Süresi</label>
+            <label>Gerçek Sunucu Uptime</label>
             <div id="metricUptime" class="value">00:00:00</div>
         </div>
     </div>
 
-    <div class="main-content">
-        <!-- Sol: Oyuncu Listesi -->
-        <div class="panel">
-            <div class="panel-title">
-                <span>Anlık İstemci Tablosu</span>
-                <span id="clientCounter" style="font-size: 0.75rem; color: #fca5a5;">0 Aktif</span>
-            </div>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>İstemci ID</th>
-                            <th>Durum</th>
-                            <th>Senkronizasyon</th>
-                        </tr>
-                    </thead>
-                    <tbody id="playerTableBody">
-                        <tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 40px;">İstemci bekleniyor...</td></tr>
-                    </tbody>
-                </table>
-            </div>
+    <div class="panel">
+        <div class="panel-title">
+            <span>Anlık İstemci Tablosu</span>
+            <span id="clientCounter" style="font-size: 0.75rem; color: #fca5a5;">0 Aktif</span>
         </div>
-
-        <!-- Sağ: Müzik Bilgisi -->
-        <div class="panel">
-            <div class="panel-title">NCS Müzik Akışı</div>
-            <div class="player-box">
-                <div class="track-info">
-                    <div class="track-title">Parça: NCS Electronic Stream</div>
-                    <div class="track-status">Sistem Kararlı ve Akıcı</div>
-                </div>
-            </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>İstemci ID</th>
+                        <th>Durum</th>
+                        <th>Senkronizasyon</th>
+                    </tr>
+                </thead>
+                <tbody id="playerTableBody">
+                    <tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 30px;">İstemci bekleniyor...</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -102,43 +94,121 @@
         <div>Developer by <span style="color: #f87171;">EmossDev</span></div>
     </div>
 
+    <!-- Altta Sabit, Açılıp Kapanabilen Müzik Çalar Barı -->
+    <div id="musicBar" class="music-bar">
+        <div class="music-left">
+            <span style="font-size: 0.75rem; color: #fca5a5; text-transform: uppercase; font-weight: bold;">NCS Akış:</span>
+            <span id="trackTitle" class="music-title">Yükleniyor...</span>
+        </div>
+        <div class="music-controls">
+            <button class="btn-m" onclick="nextTrack()">Sonraki Şarkı</button>
+            <button class="btn-toggle" id="toggleBarBtn" onclick="toggleMusicBar()">Küçült / Aç</button>
+        </div>
+    </div>
+
+    <!-- Gizli YouTube API Oynatıcı -->
+    <div id="youtube-player-container">
+        <div id="yt-player"></div>
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+
     <script>
         let ws = null;
-        let startTime = Date.now();
-        const dot = document.getElementById('dot');
-        const statusText = document.getElementById('statusText');
-        const metricPlayers = document.getElementById('metricPlayers');
-        const metricUptime = document.getElementById('metricUptime');
-        const playerTableBody = document.getElementById('playerTableBody');
-        const clientCounter = document.getElementById('clientCounter');
+        let player;
+        let isBarMinimized = false;
 
-        // Uptime Sayacı (Optimize edilmiş)
-        setInterval(() => {
-            const diff = Math.floor((Date.now() - startTime) / 1000);
-            const h = String(Math.floor(diff / 3600)).padStart(2, '0');
-            const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
-            const s = String(diff % 60).padStart(2, '0');
-            metricUptime.textContent = h + ':' + m + ':' + s;
-        }, 1000);
+        const ncsPlaylist = [
+            { id: "J2X5mJ3HDYE", name: "DEAF KEV - Invincible [NCS Release]" },
+            { id: "K4DyBUG242c", name: "Cartoon - On & On (feat. Daniel Levi) [NCS Release]" },
+            { id: "CSvFpBOe8eY", name: "Spectre - Alan Walker [NCS Release]" },
+            { id: "B7xai5u_tnk", name: "Elektronomia - Sky High [NCS Release]" },
+            { id: "m2rjovJ2dEg", name: "Janji - Heroes Tonight (feat. Johnning) [NCS Release]" },
+            { id: "n8wpw5U5m5k", name: "Tobu - Candyland [NCS Release]" }
+        ];
+        let currentTrackIndex = 0;
 
-        // Kararlı WebSocket Bağlantısı
+        function toggleMusicBar() {
+            const bar = document.getElementById('musicBar');
+            const btn = document.getElementById('toggleBarBtn');
+            isBarMinimized = !isBarMinimized;
+            if (isBarMinimized) {
+                bar.classList.add('minimized');
+                btn.textContent = "Müziği Aç";
+            } else {
+                bar.classList.remove('minimized');
+                btn.textContent = "Küçült / Aç";
+            }
+        }
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('yt-player', {
+                height: '0',
+                width: '0',
+                videoId: ncsPlaylist[currentTrackIndex].id,
+                playerVars: { 'autoplay': 1, 'controls': 0, 'loop': 0 },
+                events: {
+                    'onReady': (e) => {
+                        updateTrackInfo();
+                        // Sayfaya ilk tıklamada otomatik başlatma güvenliği
+                        window.addEventListener('click', () => {
+                            if (player && player.getPlayerState() !== YT.PlayerState.PLAYING) {
+                                player.playVideo();
+                            }
+                        }, { once: true });
+                    },
+                    'onStateChange': (e) => {
+                        if (e.data === YT.PlayerState.ENDED) {
+                            nextTrack();
+                        }
+                    }
+                }
+            });
+        }
+
+        function nextTrack() {
+            currentTrackIndex = (currentTrackIndex + 1) % ncsPlaylist.length;
+            player.loadVideoById(ncsPlaylist[currentTrackIndex].id);
+            updateTrackInfo();
+        }
+
+        function updateTrackInfo() {
+            document.getElementById('trackTitle').textContent = ncsPlaylist[currentTrackIndex].name;
+        }
+
+        // Gerçek Uptime Formatlayıcı (saniyeyi HH:MM:SS çevirir)
+        function formatUptime(totalSecs) {
+            const h = String(Math.floor(totalSecs / 3600)).padStart(2, '0');
+            const m = String(Math.floor((totalSecs % 3600) / 60)).padStart(2, '0');
+            const s = String(totalSecs % 60).padStart(2, '0');
+            return h + ':' + m + ':' + s;
+        }
+
+        // WebSocket Bağlantısı ve Gerçek Zamanlı Veri Senkronizasyonu
         function connect() {
             const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
             ws = new WebSocket(proto + location.host);
 
             ws.onopen = () => {
-                dot.className = "dot online";
-                statusText.textContent = "Bağlantı Aktif";
+                document.getElementById('dot').className = "dot online";
+                document.getElementById('statusText').textContent = "Bağlantı Aktif";
             };
 
             ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
+                    
+                    // Gerçek Uptime Güncellemesi
+                    if (data.up !== undefined) {
+                        document.getElementById('metricUptime').textContent = formatUptime(data.up);
+                    }
+
+                    // Oyuncu Tablosu Güncellemesi
                     if (data.t === 's') {
                         const players = data.p;
                         const keys = Object.keys(players);
-                        metricPlayers.textContent = keys.length;
-                        clientCounter.textContent = keys.length + ' Aktif';
+                        document.getElementById('metricPlayers').textContent = keys.length;
+                        document.getElementById('clientCounter').textContent = keys.length + ' Aktif';
 
                         if (keys.length > 0) {
                             let html = '';
@@ -150,22 +220,18 @@
                                     '<td style="color:#fca5a5; opacity:0.7;">Senkronize</td>' +
                                 '</tr>';
                             }
-                            playerTableBody.innerHTML = html;
+                            document.getElementById('playerTableBody').innerHTML = html;
                         } else {
-                            playerTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 30px;">Aktif bağlantı yok</td></tr>';
+                            document.getElementById('playerTableBody').innerHTML = '<tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 30px;">Aktif bağlantı yok</td></tr>';
                         }
                     }
                 } catch (e) {}
             };
 
             ws.onclose = () => {
-                dot.className = "dot";
-                statusText.textContent = "Yeniden bağlanılıyor...";
+                document.getElementById('dot').className = "dot";
+                document.getElementById('statusText').textContent = "Yeniden bağlanılıyor...";
                 setTimeout(connect, 3000);
-            };
-
-            ws.onerror = () => {
-                ws.close();
             };
         }
 
