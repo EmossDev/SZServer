@@ -3,69 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sector Zero // Enterprise Command Center</title>
+    <title>Sector Zero // Control Center</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: #050001; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; padding: 20px; overflow-x: hidden; }
+        body { background-color: #060102; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; padding: 20px; }
         
-        .header { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #180206 0%, #050001 100%); border: 1px solid #7f1d1d; padding: 20px 30px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 30px rgba(127, 29, 29, 0.4); }
+        .header { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #180206 0%, #080102 100%); border: 1px solid #7f1d1d; padding: 20px 30px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 30px rgba(127, 29, 29, 0.3); }
         .header h1 { font-size: 1.4rem; color: #f87171; letter-spacing: 2.5px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
-        .header h1 small { font-size: 0.65rem; color: #fca5a5; opacity: 0.7; font-weight: normal; }
+        .header h1 span { font-size: 0.65rem; background: #4a0e17; padding: 3px 8px; border-radius: 6px; border: 1px solid #7f1d1d; color: #fca5a5; }
         
-        .header-controls { display: flex; gap: 15px; align-items: center; }
         .status-pill { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; background: #1f060b; padding: 8px 16px; border-radius: 20px; border: 1px solid #991b1b; }
         .dot { width: 9px; height: 9px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 10px #ef4444; }
         .dot.online { background: #22c55e; box-shadow: 0 0 12px #22c55e; }
 
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .metric-card { background: #100204; border: 1px solid #7f1d1d44; padding: 20px; border-radius: 14px; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         .metric-card::after { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #dc2626; }
         .metric-card label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #fca5a5; font-weight: 600; }
         .metric-card .value { font-size: 1.5rem; font-weight: bold; color: #f8fafc; margin-top: 8px; font-family: monospace; }
 
-        .main-content { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; flex: 1; }
-        @media (max-width: 1000px) { .main-content { grid-template-columns: 1fr; } }
+        .main-content { display: grid; grid-template-columns: 1fr 350px; gap: 20px; flex: 1; }
+        @media (max-width: 900px) { .main-content { grid-template-columns: 1fr; } }
 
         .panel { background: #100204; border: 1px solid #7f1d1d44; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
         .panel-title { font-size: 0.95rem; font-weight: 600; color: #fca5a5; margin-bottom: 15px; border-bottom: 1px solid #7f1d1d44; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
 
-        .table-container { overflow-x: auto; flex: 1; max-height: 280px; }
+        .table-container { overflow-x: auto; flex: 1; max-height: 350px; }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
         th { color: #fca5a5; font-weight: 600; padding: 10px; border-bottom: 1px solid #7f1d1d44; }
         td { padding: 12px 10px; border-bottom: 1px solid #7f1d1d11; color: #e2e8f0; font-family: monospace; }
 
-        /* EKG Canlı Çizelge Modülü */
-        .ekg-wrapper { background: #030001; border: 1px solid #7f1d1d66; border-radius: 10px; height: 150px; position: relative; overflow: hidden; margin-bottom: 15px; display: flex; align-items: center; }
-        canvas { width: 100%; height: 100%; display: block; }
-        .ekg-label { position: absolute; top: 8px; left: 10px; font-size: 0.7rem; color: #f87171; font-family: monospace; letter-spacing: 1px; }
+        /* NCS Müzik Çalar Tasarımı */
+        .player-box { display: flex; flex-direction: column; gap: 15px; }
+        .track-info { background: #080103; border: 1px solid #7f1d1d66; padding: 12px 15px; border-radius: 10px; font-family: monospace; }
+        .track-title { font-size: 0.85rem; color: #f87171; font-weight: bold; margin-bottom: 4px; }
+        .track-status { font-size: 0.7rem; color: #94a3b8; }
 
-        /* Müzik Çalar ve Ekstra Araçlar */
-        .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .tool-box { background: #080103; border: 1px solid #7f1d1d55; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-        .tool-box label { font-size: 0.75rem; color: #fca5a5; text-transform: uppercase; font-weight: 600; }
-        
-        .btn-audio { background: #7f1d1d; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-audio:hover { background: #b91c1c; }
-        
-        .credits-display { font-family: monospace; font-size: 1.1rem; color: #eab308; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
+        .player-controls { display: flex; gap: 10px; }
+        .btn { flex: 1; background: #7f1d1d; color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.8rem; }
+        .btn:hover { background: #b91c1c; }
+        .btn-outline { background: transparent; border: 1px solid #7f1d1d; color: #fca5a5; }
+        .btn-outline:hover { background: #4a0e17; }
 
-        /* Footer / İmza */
         .footer { margin-top: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #64748b; border-top: 1px solid #7f1d1d33; padding-top: 15px; }
         .footer span { color: #f87171; font-weight: bold; font-family: monospace; }
-        
-        /* Gizli YouTube Telifsiz Lo-Fi Akışı */
-        #audioContainer { display: none; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>SZ-COMMAND CENTER <small>v4.0 Enterprise</small></h1>
-        <div class="header-controls">
-            <div class="status-pill">
-                <span id="dot" class="dot"></span>
-                <span id="statusText">Bağlanıyor...</span>
-            </div>
+        <h1>SZSERVER <span>CONTROL CENTER</span></h1>
+        <div class="status-pill">
+            <span id="dot" class="dot"></span>
+            <span id="statusText">Bağlanıyor...</span>
         </div>
     </div>
 
@@ -74,10 +64,6 @@
             <label>Aktif Bağlantılar</label>
             <div id="metricPlayers" class="value">0</div>
         </div>
-        <div class="metric-card" style="border-left-color: #eab308;">
-            <label>Sistem Kredisi (Credits)</label>
-            <div id="metricCredits" class="value" style="color: #facc15;">1,048,576</div>
-        </div>
         <div class="metric-card" style="border-left-color: #991b1b;">
             <label>Çalışma Süresi</label>
             <div id="metricUptime" class="value">00:00:00</div>
@@ -85,10 +71,10 @@
     </div>
 
     <div class="main-content">
-        <!-- Sol Panel: Aktif Bağlantı Tablosu -->
+        <!-- Sol: Oyuncu/İstemci Listesi -->
         <div class="panel">
             <div class="panel-title">
-                <span>Anlık İstemci Telemetrisi</span>
+                <span>Anlık İstemci Tablosu</span>
                 <span id="clientCounter" style="font-size: 0.75rem; color: #fca5a5;">0 Aktif</span>
             </div>
             <div class="table-container">
@@ -101,66 +87,89 @@
                         </tr>
                     </thead>
                     <tbody id="playerTableBody">
-                        <tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 40px;">İstemci verisi bekleniyor...</td></tr>
+                        <tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 40px;">İstemci bekleniyor...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Sağ Panel: EKG Çizelgesi ve Müzik Çalar -->
+        <!-- Sağ: NCS Müzik Çalar -->
         <div class="panel">
-            <div class="panel-title">Canlı Sistem Dalga Formu (EKG)</div>
-            
-            <!-- EKG Canvas -->
-            <div class="ekg-wrapper">
-                <span class="ekg-label">AĞ TRAFİĞİ // PULSE MONITOR</span>
-                <canvas id="ekgCanvas" width="400" height="150"></canvas>
-            </div>
-
-            <!-- Araçlar: Müzik Çalar & Kredi Yönetimi -->
-            <div class="tools-grid">
-                <div class="tool-box">
-                    <label>Arkada Fon Müzigi</label>
-                    <div style="display: flex; gap: 5px; align-items: center;">
-                        <button class="btn-audio" id="audioToggleBtn" onclick="toggleAudio()">Müziği Durdur</button>
-                        <span id="audioStatus" style="font-size: 0.7rem; color: #22c55e;">● Çalıyor</span>
-                    </div>
+            <div class="panel-title">NCS Telifsiz Müzik Çalar</div>
+            <div class="player-box">
+                <div class="track-info">
+                    <div id="trackTitle" class="track-title">Parça: NCS Electronic Stream</div>
+                    <div id="trackStatus" class="track-status">Durum: Müzik çalmaya hazır (Oynat'a bas)</div>
                 </div>
-                <div class="tool-box">
-                    <label>Sistem Lisans Cüzdanı</label>
-                    <div class="credits-display">
-                        <span>CR:</span>
-                        <span id="walletCredit">999,990</span>
-                    </div>
+
+                <!-- HTML5 Doğrudan Ses Akışı (Tarayıcıda Çalışan Gerçek Ses) -->
+                <audio id="audioPlayer" preload="auto">
+                    <source id="audioSource" src="https://stream.nocopyrightsounds.com/index.html" type="audio/mpeg">
+                    Tarayıcınız ses akışını desteklemiyor.
+                </audio>
+
+                <div class="player-controls">
+                    <button class="btn" id="playPauseBtn" onclick="togglePlay()">Oynat</button>
+                    <button class="btn btn-outline" onclick="nextTrack()">Sonraki Parça</button>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="footer">
-        <div>Sector Zero Core Architecture. Tüm hakları saklıdır.</div>
-        <div>Developer by <span style="color: #f87171; text-shadow: 0 0 10px rgba(248,113,113,0.5);">EmossDev</span></div>
-    </div>
-
-    <!-- YouTube Telifsiz Lo-Fi Canlı Akış Iframe (Arka Planda Gizli) -->
-    <div id="audioContainer">
-        <iframe id="ytAudio" width="200" height="200" src="https://www.youtube.com/embed/5qap5aO4i9A?enablejsapi=1&autoplay=1&loop=1" allow="autoplay"></iframe>
+        <div>Sector Zero Core Architecture.</div>
+        <div>Developer by <span style="color: #f87171;">EmossDev</span></div>
     </div>
 
     <script>
         let ws = null;
         let startTime = Date.now();
-        let isAudioPlaying = true;
-
+        
         const dot = document.getElementById('dot');
         const statusText = document.getElementById('statusText');
         const metricPlayers = document.getElementById('metricPlayers');
         const metricUptime = document.getElementById('metricUptime');
         const playerTableBody = document.getElementById('playerTableBody');
         const clientCounter = document.getElementById('clientCounter');
-        const audioToggleBtn = document.getElementById('audioToggleBtn');
-        const audioStatus = document.getElementById('audioStatus');
-        const walletCredit = document.getElementById('walletCredit');
+        
+        const audioPlayer = document.getElementById('audioPlayer');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const trackTitle = document.getElementById('trackTitle');
+        const trackStatus = document.getElementById('trackStatus');
+
+        // Çalışan Doğrudan Telifsiz NCS ve Elektronik Müzik Akış Listesi
+        const ncsTracks = [
+            { name: "NCS Official Stream (Electronic / House)", url: "https://stream.nocopyrightsounds.com/" },
+            { name: "NCS Nightcore / Dubstep Radio", url: "https://listen.moe/stream" },
+            { name: "Synthwave / Cyberpunk Radio Stream", url: "https://radio.plaza.one/mp3" }
+        ];
+        let currentTrackIndex = 0;
+
+        function togglePlay() {
+            if (audioPlayer.paused) {
+                audioPlayer.src = ncsTracks[currentTrackIndex].url;
+                audioPlayer.play().then(() => {
+                    playPauseBtn.textContent = "Durdur";
+                    trackStatus.textContent = "Durum: Canlı Akış Çalıyor";
+                }).catch(e => {
+                    trackStatus.textContent = "Hata: Tarayıcı akışı engelledi.";
+                });
+            } else {
+                audioPlayer.pause();
+                playPauseBtn.textContent = "Oynat";
+                trackStatus.textContent = "Durum: Duraklatıldı";
+            }
+        }
+
+        function nextTrack() {
+            currentTrackIndex = (currentTrackIndex + 1) % ncsTracks.length;
+            trackTitle.textContent = "Parça: " + ncsTracks[currentTrackIndex].name;
+            audioPlayer.src = ncsTracks[currentTrackIndex].url;
+            audioPlayer.play().then(() => {
+                playPauseBtn.textContent = "Durdur";
+                trackStatus.textContent = "Durum: Canlı Akış Çalıyor";
+            });
+        }
 
         // Uptime Sayacı
         setInterval(() => {
@@ -171,96 +180,14 @@
             metricUptime.textContent = h + ':' + m + ':' + s;
         }, 1000);
 
-        // Kredi Artış Efekti (Caf caflı görünüm için)
-        setInterval(() => {
-            let current = parseInt(walletCredit.textContent.replace(/,/g, '')) + Math.floor(Math.random() * 5);
-            walletCredit.textContent = current.toLocaleString();
-        }, 3000);
-
-        // Müzik Aç / Kapa Butonu (Varsayılan otomatik açık başlar)
-        function toggleAudio() {
-            const iframe = document.getElementById('ytAudio');
-            isAudioPlaying = !isAudioPlaying;
-            if (isAudioPlaying) {
-                iframe.src = "https://www.youtube.com/embed/5qap5aO4i9A?enablejsapi=1&autoplay=1&loop=1";
-                audioToggleBtn.textContent = "Müziği Durdur";
-                audioStatus.textContent = "● Çalıyor";
-                audioStatus.style.color = "#22c55e";
-            } else {
-                iframe.src = ""; // Durdurmak için kaynağı boşalt
-                audioToggleBtn.textContent = "Müziği Başlat";
-                audioStatus.textContent = "■ Sessiz";
-                audioStatus.style.color = "#ef4444";
-            }
-        }
-
-        // EKG Canlı Dalga Formu Çizimi (Canvas)
-        const canvas = document.getElementById('ekgCanvas');
-        const ctx = canvas.getContext('2d');
-        let ekgX = 0;
-        let ekgY = 75;
-        let ekgPoints = [];
-
-        function initEkg() {
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = 150;
-            ekgY = canvas.height / 2;
-            for(let i=0; i<canvas.width; i++) ekgPoints.push(ekgY);
-        }
-        window.onresize = initEkg;
-        initEkg();
-
-        function drawEkg() {
-            ctx.fillStyle = '#030001';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Arka plan ızgarası
-            ctx.strokeStyle = '#2b050a';
-            ctx.lineWidth = 1;
-            for(let x=0; x<canvas.width; x+=30) {
-                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-            }
-
-            // EKG Sinyal Üretimi
-            ekgX += 2;
-            if (ekgX > canvas.width) ekgX = 0;
-
-            // Rastgele nabız dalgalanması
-            let nextY = canvas.height / 2;
-            let rand = Math.random();
-            if (rand > 0.92) nextY -= (Math.random() * 50 + 20);
-            else if (rand < 0.08) nextY += (Math.random() * 50 + 20);
-            else nextY += (Math.random() * 6 - 3);
-
-            ekgPoints.shift();
-            ekgPoints.push(nextY);
-
-            // Çizgiyi çiz
-            ctx.strokeStyle = '#ef4444';
-            ctx.lineWidth = 2;
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = '#ef4444';
-            ctx.beginPath();
-            
-            for(let i=0; i<ekgPoints.length; i++) {
-                if(i === 0) ctx.moveTo(i, ekgPoints[i]);
-                else ctx.lineTo(i, ekgPoints[i]);
-            }
-            ctx.stroke();
-            ctx.shadowBlur = 0; // reset
-
-            requestAnimationFrame(drawEkg);
-        }
-        drawEkg();
-
-        // WebSocket Bağlantısı (Server.js ile tam uyumlu)
+        // WebSocket Bağlantısı
         function connect() {
             const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
             ws = new WebSocket(proto + location.host);
 
             ws.onopen = () => {
                 dot.className = "dot online";
-                statusText.textContent = "Command Center Aktif";
+                statusText.textContent = "Bağlantı Aktif";
             };
 
             ws.onmessage = (event) => {
@@ -277,13 +204,13 @@
                             for (const id in players) {
                                 html += '<tr>' +
                                     '<td style="font-weight:700; color:#fca5a5;">' + id + '</td>' +
-                                    '<td style="color:#22c55e;">● Aktif / Senkronize</td>' +
-                                    '<td style="color:#fca5a5; opacity:0.7;">Bağlı</td>' +
+                                    '<td style="color:#22c55e;">● Aktif</td>' +
+                                    '<td style="color:#fca5a5; opacity:0.7;">Senkronize</td>' +
                                 '</tr>';
                             }
                             playerTableBody.innerHTML = html;
                         } else {
-                            playerTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 30px;">Aktif istemci bulunmuyor</td></tr>';
+                            playerTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 30px;">Aktif bağlantı yok</td></tr>';
                         }
                     }
                 } catch (e) {}
