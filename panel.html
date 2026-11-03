@@ -144,7 +144,7 @@
             <div class="gradient-text">Owned by EmossDev</div>
         </div>
         <div class="metric-card" style="border-left-color: #ef4444;">
-            <label>Canlı Gecikme (Ping)</label>
+            <label>Sunucu Öz Gecikmesi</label>
             <div id="pingValue" class="value" style="font-size: 1.5rem; font-weight: bold; color: #22c55e; margin-top: 8px; font-family: monospace;">-- ms</div>
         </div>
     </div>
@@ -187,7 +187,6 @@
         let ws = null;
         let player;
         let isBarMinimized = false;
-        let pingInterval = null;
 
         const ncsPlaylist = [
             { id: "J2X5mJ3HDYE", name: "DEAF KEV - Invincible" },
@@ -293,28 +292,20 @@
             ws.onopen = () => {
                 document.getElementById('dot').className = "dot online";
                 document.getElementById('statusText').textContent = "Bağlantı Aktif";
-
-                // Canlı Ping Gönderimi
-                if (pingInterval) clearInterval(pingInterval);
-                pingInterval = setInterval(() => {
-                    if (ws.readyState === WebSocket.OPEN) {
-                        ws.send(JSON.stringify({ t: 'ping', time: Date.now() }));
-                    }
-                }, 2000);
             };
 
             ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
                     
-                    // Pong Yanıtını Yakala ve MS Hesapla
-                    if (data.t === 'pong') {
-                        const latency = Date.now() - data.time;
+                    // Sunucunun öz iç döngü gecikmesini ekrana yansıt
+                    if (data.serverPing !== undefined) {
+                        const pingVal = data.serverPing;
                         const pingEl = document.getElementById('pingValue');
-                        pingEl.textContent = latency + ' ms';
+                        pingEl.textContent = pingVal + ' ms';
                         
-                        if (latency < 100) pingEl.style.color = '#22c55e';
-                        else if (latency < 250) pingEl.style.color = '#eab308';
+                        if (pingVal <= 3) pingEl.style.color = '#22c55e';
+                        else if (pingVal <= 8) pingEl.style.color = '#eab308';
                         else pingEl.style.color = '#ef4444';
                     }
 
@@ -325,7 +316,6 @@
             };
 
             ws.onclose = () => {
-                clearInterval(pingInterval);
                 document.getElementById('dot').className = "dot";
                 document.getElementById('statusText').textContent = "Yeniden bağlanılıyor...";
                 document.getElementById('pingValue').textContent = "-- ms";
