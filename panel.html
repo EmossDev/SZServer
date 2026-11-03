@@ -3,117 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sector Zero // Enterprise Control Center</title>
+    <title>Sector Zero // Owner Command Center</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: #080103; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; padding: 20px; }
+        body { background-color: #060102; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; padding: 20px; }
         
-        .header { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #180206 0%, #0d0103 100%); border: 1px solid #7f1d1d; padding: 20px 30px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 30px rgba(127, 29, 29, 0.3); }
+        .header { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #180206 0%, #080102 100%); border: 1px solid #7f1d1d; padding: 20px 30px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 30px rgba(127, 29, 29, 0.3); }
         .header h1 { font-size: 1.4rem; color: #f87171; letter-spacing: 2.5px; font-weight: 800; display: flex; align-items: center; gap: 12px; }
         .header h1 span { font-size: 0.75rem; background: #4a0e17; padding: 3px 8px; border-radius: 6px; border: 1px solid #7f1d1d; color: #fca5a5; }
         
+        .header-stats { display: flex; gap: 15px; align-items: center; }
         .status-pill { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; background: #1f060b; padding: 8px 16px; border-radius: 20px; border: 1px solid #991b1b; }
         .dot { width: 9px; height: 9px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 10px #ef4444; }
         .dot.online { background: #22c55e; box-shadow: 0 0 12px #22c55e; }
 
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .metric-card { background: #100204; border: 1px solid #7f1d1d44; padding: 20px; border-radius: 14px; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         .metric-card::after { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #dc2626; }
         .metric-card label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #fca5a5; font-weight: 600; }
         .metric-card .value { font-size: 1.5rem; font-weight: bold; color: #f8fafc; margin-top: 8px; font-family: monospace; }
 
-        .main-content { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; flex: 1; }
-        @media (max-width: 1000px) { .main-content { grid-template-columns: 1fr; } }
+        .main-content { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; flex: 1; }
+        @media (max-width: 1100px) { .main-content { grid-template-columns: 1fr; } }
 
         .panel { background: #100204; border: 1px solid #7f1d1d44; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
         .panel-title { font-size: 0.95rem; font-weight: 600; color: #fca5a5; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #7f1d1d44; padding-bottom: 10px; }
 
-        .table-container { overflow-x: auto; flex: 1; max-height: 350px; }
+        .table-container { overflow-x: auto; flex: 1; max-height: 400px; }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
         th { color: #fca5a5; font-weight: 600; padding: 10px; border-bottom: 1px solid #7f1d1d44; }
         td { padding: 12px 10px; border-bottom: 1px solid #7f1d1d11; color: #e2e8f0; font-family: monospace; }
 
-        .raw-json-view { background: #050102; border: 1px solid #7f1d1d66; border-radius: 10px; padding: 12px; font-family: monospace; font-size: 0.75rem; color: #38bdf8; height: 160px; overflow-y: auto; white-space: pre-wrap; }
+        .badge-device { background: #4a0e17; color: #fca5a5; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; border: 1px solid #7f1d1d; font-weight: 600; }
+        .badge-room { background: #1e1b4b; color: #93c5fd; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; border: 1px solid #3b82f6; font-weight: 600; }
 
-        .console-container { display: flex; flex-direction: column; gap: 15px; flex: 1; }
-        .log-box { background: #050102; border: 1px solid #7f1d1d66; border-radius: 10px; padding: 12px; font-family: monospace; font-size: 0.75rem; color: #fca5a5; height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+        /* Canlı Taktiksel Seyirci Alanı (Spectator Canvas) */
+        .spectator-container { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+        .room-selector { display: flex; gap: 8px; align-items: center; }
+        .room-selector select { background: #180206; border: 1px solid #7f1d1d; color: #fca5a5; padding: 8px 12px; border-radius: 8px; font-weight: 600; outline: none; }
         
-        .action-row { display: flex; gap: 10px; }
-        .btn { flex: 1; padding: 11px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.85rem; }
-        .btn-red { background: #dc2626; color: #fff; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); }
-        .btn-red:hover { background: #b91c1c; }
-        .btn-outline { background: transparent; border: 1px solid #7f1d1d; color: #fca5a5; }
-        .btn-outline:hover { background: #4a0e17; }
+        .spectator-canvas-wrapper { position: relative; background: #030001; border: 1px solid #7f1d1d66; border-radius: 10px; height: 320px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        canvas { width: 100%; height: 100%; display: block; }
+        .spectator-overlay { position: absolute; top: 10px; left: 10px; font-size: 0.75rem; color: #fca5a5; background: rgba(18, 2, 6, 0.8); padding: 4px 8px; border-radius: 4px; border: 1px solid #7f1d1d; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>SZSERVER <span>ENTERPRISE DASHBOARD</span></h1>
-        <div class="status-pill">
-            <span id="dot" class="dot"></span>
-            <span id="statusText">Bağlantı Bekleniyor...</span>
+        <h1>SZSERVER <span>OWNER COMMAND CENTER</span></h1>
+        <div class="header-stats">
+            <div class="status-pill">
+                <span id="dot" class="dot"></span>
+                <span id="statusText">Bağlantı Kuruluyor...</span>
+            </div>
         </div>
     </div>
 
     <div class="dashboard-grid">
         <div class="metric-card">
-            <label>Aktif Bağlantılar</label>
+            <label>Aktif Oyuncular</label>
             <div id="metricPlayers" class="value">0</div>
         </div>
+        <div class="metric-card" style="border-left-color: #3b82f6;">
+            <label>Panel Ziyaretçileri (İzleyici)</label>
+            <div id="metricViewers" class="value" style="color: #93c5fd;">0</div>
+        </div>
         <div class="metric-card" style="border-left-color: #991b1b;">
-            <label>Çalışma Süresi</label>
+            <label>Çalışma Süresi (Uptime)</label>
             <div id="metricUptime" class="value">00:00:00</div>
         </div>
-        <div class="metric-card" style="border-left-color: #b91c1c;">
-            <label>Bellek (Heap)</label>
-            <div id="metricRam" class="value">-- MB</div>
-        </div>
         <div class="metric-card" style="border-left-color: #eab308;">
-            <label>Toplam Paket</label>
-            <div id="metricPackets" class="value">0</div>
+            <label>Aktif Oda Sayısı</label>
+            <div id="metricRooms" class="value">0</div>
         </div>
     </div>
 
     <div class="main-content">
+        <!-- Oyuncu Telemetri Tablosu -->
         <div class="panel">
             <div class="panel-title">
-                <span>Anlık Oyuncu Telemetri Tablosu</span>
-                <span id="playerCounter" style="font-size: 0.75rem; color: #fca5a5;">0 Aktif</span>
+                <span>Aktif Oyuncu Listesi & Durumlar</span>
+                <span id="playerCounter" style="font-size: 0.75rem; color: #fca5a5;">0 Oyuncu</span>
             </div>
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th>Client ID</th>
+                            <th>Oyuncu Adı</th>
+                            <th>Cihaz / Platform</th>
+                            <th>Bulunduğu Oda</th>
                             <th>Durum</th>
-                            <th>Senkronizasyon</th>
                         </tr>
                     </thead>
                     <tbody id="playerTableBody">
-                        <tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 40px;">Veri bekleniyor...</td></tr>
+                        <tr><td colspan="4" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 40px;">Oyuncu bekleniyor...</td></tr>
                     </tbody>
                 </table>
             </div>
-            
-            <div style="margin-top: 15px;">
-                <label style="font-size:0.75rem; color:#fca5a5; text-transform:uppercase; display:block; margin-bottom:8px;">Canlı State Veri Akışı (JSON)</label>
-                <div id="rawJsonView" class="raw-json-view">{}</div>
-            </div>
         </div>
 
+        <!-- Canlı Kuş Bakışı Oda Seyirci Modülü -->
         <div class="panel">
-            <div class="panel-title">Sistem Konsol Akışı</div>
-            <div class="console-container">
-                <div id="logBox" class="log-box">
-                    <div>[Sistem] Panel başarıyla yüklendi, WebSocket bekleniyor...</div>
+            <div class="panel-title">
+                <span>Canlı Oda Seyirci Modu (Spectator)</span>
+                <div class="room-selector">
+                    <label style="font-size:0.75rem; color:#fca5a5;">Oda:</label>
+                    <select id="roomSelect" onchange="changeRoomFilter()">
+                        <option value="ALL">Tüm Odalar (Genel Bakış)</option>
+                        <option value="Oda_1">Oda #1 (Lobi)</option>
+                        <option value="Oda_2">Oda #2 (Savaş)</option>
+                        <option value="Oda_3">Oda #3 (Arena)</option>
+                    </select>
                 </div>
-                
-                <div>
-                    <label style="font-size:0.75rem; color:#fca5a5; text-transform:uppercase; display:block; margin-bottom:6px;">Panel İşlemleri</label>
-                    <div class="action-row">
-                        <button class="btn btn-red" onclick="clearLogs()">Konsolu Temizle</button>
-                    </div>
+            </div>
+            <div class="spectator-container">
+                <div class="spectator-canvas-wrapper">
+                    <div class="spectator-overlay" id="spectatorStatus">Kuş Bakışı İzleme Aktif</div>
+                    <canvas id="spectatorCanvas" width="500" height="300"></canvas>
+                </div>
+                <div style="font-size: 0.75rem; color: #94a3b8; text-align: center;">
+                    Seçilen odadaki oyuncuların anlık konumları radar üzerinde gerçek zamanlı gösterilir.
                 </div>
             </div>
         </div>
@@ -122,36 +131,27 @@
     <script>
         let ws = null;
         let startTime = Date.now();
-        let packetCount = 0;
+        let lastPlayersData = {};
+        let selectedRoom = "ALL";
 
         const dot = document.getElementById('dot');
         const statusText = document.getElementById('statusText');
         const metricPlayers = document.getElementById('metricPlayers');
+        const metricViewers = document.getElementById('metricViewers');
         const metricUptime = document.getElementById('metricUptime');
-        const metricRam = document.getElementById('metricRam');
-        const metricPackets = document.getElementById('metricPackets');
+        const metricRooms = document.getElementById('metricRooms');
         const playerTableBody = document.getElementById('playerTableBody');
         const playerCounter = document.getElementById('playerCounter');
-        const logBox = document.getElementById('logBox');
-        const rawJsonView = document.getElementById('rawJsonView');
+        const roomSelect = document.getElementById('roomSelect');
+        const canvas = document.getElementById('spectatorCanvas');
+        const ctx = canvas.getContext('2d');
 
-        function addLog(msg) {
-            const time = new Date().toTimeString().split(' ')[0];
-            const div = document.createElement('div');
-            div.textContent = '[' + time + '] ' + msg;
-            logBox.appendChild(div);
-            logBox.scrollTop = logBox.scrollHeight;
+        function changeRoomFilter() {
+            selectedRoom = roomSelect.value;
+            renderCanvas();
         }
 
-        function clearLogs() {
-            logBox.innerHTML = '';
-            addLog('Konsol temizlendi.');
-        }
-
-        setInterval(() => {
-            metricRam.textContent = (18 + Math.random() * 3).toFixed(1) + ' MB';
-        }, 1000);
-
+        // Uptime Sayacı
         setInterval(() => {
             const diff = Math.floor((Date.now() - startTime) / 1000);
             const h = String(Math.floor(diff / 3600)).padStart(2, '0');
@@ -160,45 +160,105 @@
             metricUptime.textContent = h + ':' + m + ':' + s;
         }, 1000);
 
+        // Canvas Kuş Bakışı Çizim Döngüsü
+        function renderCanvas() {
+            ctx.fillStyle = '#050102';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Radar Izgarası Çizgileri
+            ctx.strokeStyle = '#2b050a';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 40) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 40) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+            }
+
+            // Oyuncuları Radar Üzerine Yerleştir
+            let activeRoomsSet = new Set();
+            let count = 0;
+
+            for (const id in lastPlayersData) {
+                const p = lastPlayersData[id];
+                const room = p.room || 'Oda_1';
+                activeRoomsSet.add(room);
+
+                if (selectedRoom !== "ALL" && room !== selectedRoom) continue;
+                count++;
+
+                // Konum koordinatları (varsayılan merkez veya oyuncunun gönderdiği x,y)
+                const px = p.x !== undefined ? p.x : (canvas.width / 2 + (Math.sin(id.charCodeAt(0)) * 100));
+                const py = p.y !== undefined ? p.y : (canvas.height / 2 + (Math.cos(id.charCodeAt(0)) * 80));
+
+                // Noktayı çiz
+                ctx.fillStyle = '#ef4444';
+                ctx.beginPath();
+                ctx.arc(px, py, 6, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Çevresine parıltı
+                ctx.strokeStyle = '#f87171';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(px, py, 11, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // İsim Etiketi
+                ctx.fillStyle = '#fca5a5';
+                ctx.font = '11px monospace';
+                ctx.fillText((p.name || 'Oyuncu') + ' (' + room + ')', px + 14, py + 4);
+            }
+
+            metricRooms.textContent = activeRoomsSet.size;
+            document.getElementById('spectatorStatus').textContent = "Mod: " + selectedRoom + " | Gösterilen: " + count + " Oyuncu";
+        }
+
+        // Radar animasyon döngüsü
+        setInterval(renderCanvas, 100);
+
         function connect() {
             const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
             const wsUrl = proto + location.host;
             
-            addLog('Bağlantı kuruluyor: ' + wsUrl);
             ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
                 dot.className = "dot online";
-                statusText.textContent = "Bağlantı Aktif";
-                addLog('Sunucu ile WebSocket bağı kuruştu.');
+                statusText.textContent = "Command Center Aktif";
+                // Panele girdiğini sunucuya bildir (Oyuncu sayılmasın, izleyici sayılsın)
+                ws.send(JSON.stringify({ t: 'dashboard_join' }));
             };
 
             ws.onmessage = (event) => {
-                packetCount++;
-                metricPackets.textContent = packetCount;
-
                 try {
                     const data = JSON.parse(event.data);
-                    if (data.t === 's') {
-                        const players = data.p;
-                        const keys = Object.keys(players);
+                    
+                    // İzleyici / Ziyaretçi Sayısı Güncellemesi
+                    if (data.t === 'viewers') {
+                        metricViewers.textContent = data.count;
+                    } 
+                    // Oyuncu Telemetri Güncellemesi
+                    else if (data.t === 's') {
+                        lastPlayersData = data.p || {};
+                        const keys = Object.keys(lastPlayersData);
                         metricPlayers.textContent = keys.length;
-                        playerCounter.textContent = keys.length + ' Aktif';
-                        rawJsonView.textContent = JSON.stringify(players, null, 2);
+                        playerCounter.textContent = keys.length + ' Oyuncu';
 
                         if (keys.length > 0) {
                             let html = '';
-                            for (const id in players) {
+                            for (const id in lastPlayersData) {
+                                const p = lastPlayersData[id];
                                 html += '<tr>' +
-                                    '<td style="font-weight:700; color:#fca5a5;">' + id + '</td>' +
-                                    '<td style="color:#22c55e;">● Aktif</td>' +
-                                    '<td style="color:#fca5a5; opacity:0.7;">Senkronize</td>' +
+                                    '<td style="font-weight:700; color:#fca5a5;">' + (p.name || 'Bilinmeyen Oyuncu') + '</td>' +
+                                    '<td><span class="badge-device">' + (p.device || 'Game Client') + '</span></td>' +
+                                    '<td><span class="badge-room">' + (p.room || 'Oda_1') + '</span></td>' +
+                                    '<td style="color:#22c55e;">● Aktif / Oyun İçi</td>' +
                                 '</tr>';
                             }
                             playerTableBody.innerHTML = html;
                         } else {
-                            playerTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 30px;">Bağlı oyuncu yok</td></tr>';
-                            rawJsonView.textContent = '{}';
+                            playerTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 30px;">Aktif oyuncu bulunmuyor</td></tr>';
                         }
                     }
                 } catch (e) {}
@@ -207,11 +267,10 @@
             ws.onclose = () => {
                 dot.className = "dot";
                 statusText.textContent = "Bağlantı Koptu (Yeniden bağlanılıyor...)";
-                addLog('Bağlantı koptu, tekrar deneniyor...');
                 setTimeout(connect, 3000);
             };
 
-            ws.onerror = () => { addLog('Ağ hatası oluştu.'); };
+            ws.onerror = () => {};
         }
 
         window.onload = connect;
