@@ -1,15 +1,14 @@
-// Sector Zero - Serverless Dosya Okuyuculu Saf Motor (server.js)
+// Sector Zero - Gerçek Uptime Destekli Saf Motor (server.js)
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { WebSocketServer } = require('ws');
 
-// Arayüzü sunucu ilk ayağa kalkarken sadece bir kez belleğe yükler (Vercel'i asla yormaz)
 let htmlCache = '';
 try {
   htmlCache = fs.readFileSync(path.join(__dirname, 'panel.html'), 'utf8');
 } catch (e) {
-  htmlCache = 'Sector Zero server OK (panel.html bulunamadı)';
+  htmlCache = 'Sector Zero server OK';
 }
 
 const srv = http.createServer((q, r) => {
@@ -25,7 +24,7 @@ wss.on('connection', ws => {
   const c = { ws, p: {}, cnt: 0 }; C.set(id, c); ws.send(JSON.stringify({ t: 'hi', id })); dirty = true;
   
   ws.on('message', m => {
-    if (++c.cnt > 80) return; // saniyede en fazla 80 mesaj
+    if (++c.cnt > 80) return;
     let d; try { d = JSON.parse(m) } catch (e) { return }
     if (d.t !== 'p' || !d.p || typeof d.p !== 'object') return;
     for (const k in d.p) {
@@ -42,11 +41,13 @@ wss.on('connection', ws => {
 });
 
 setInterval(() => { for (const c of C.values()) c.cnt = 0 }, 1000);
+
+// Her saniye aktif istemcilere gerçek sunucu uptime (process.uptime) bilgisini gönderiyoruz
 setInterval(() => {
-  if (!dirty) return; dirty = false;
+  const uptimeSec = Math.floor(process.uptime());
   const all = {}; for (const [id, c] of C) all[id] = c.p;
-  const s = JSON.stringify({ t: 's', p: all });
+  const s = JSON.stringify({ t: 's', up: uptimeSec, p: all });
   for (const c of C.values()) if (c.ws.readyState === 1) c.ws.send(s);
-}, 50);
+}, 1000);
 
 srv.listen(process.env.PORT || 8080, () => console.log('Sector Zero server hazir'));
