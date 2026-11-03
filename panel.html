@@ -22,12 +22,14 @@
         .metric-card .value { font-size: 1.5rem; font-weight: bold; color: #f8fafc; margin-top: 8px; font-family: monospace; }
 
         .panel { background: #100204; border: 1px solid #7f1d1d44; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-        .panel-title { font-size: 0.95rem; font-weight: 600; color: #fca5a5; margin-bottom: 15px; border-bottom: 1px solid #7f1d1d44; padding-bottom: 10px; }
+        .panel-title { font-size: 0.95rem; font-weight: 600; color: #fca5a5; margin-bottom: 15px; border-bottom: 1px solid #7f1d1d44; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
 
         .table-container { overflow-x: auto; flex: 1; max-height: 400px; }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
         th { color: #fca5a5; font-weight: 600; padding: 10px; border-bottom: 1px solid #7f1d1d44; }
         td { padding: 12px 10px; border-bottom: 1px solid #7f1d1d11; color: #e2e8f0; font-family: monospace; }
+
+        .badge-device { background: #4a0e17; color: #fca5a5; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; border: 1px solid #7f1d1d; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -42,8 +44,12 @@
 
     <div class="dashboard-grid">
         <div class="metric-card">
-            <label>Aktif Bağlantılar</label>
+            <label>Aktif Oyuncular</label>
             <div id="metricPlayers" class="value">0</div>
+        </div>
+        <div class="metric-card" style="border-left-color: #3b82f6;">
+            <label>Panel Ziyaretçileri (İzleyici)</label>
+            <div id="metricViewers" class="value" style="color: #93c5fd;">0</div>
         </div>
         <div class="metric-card" style="border-left-color: #991b1b;">
             <label>Çalışma Süresi</label>
@@ -52,18 +58,21 @@
     </div>
 
     <div class="panel">
-        <div class="panel-title">Aktif İstemci Durumları</div>
+        <div class="panel-title">
+            <span>Aktif Oyuncu Listesi</span>
+            <span id="playerCounter" style="font-size: 0.75rem; color: #fca5a5;">0 Oyuncu</span>
+        </div>
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th>Client ID</th>
+                        <th>Oyuncu İsmi</th>
+                        <th>Bağlantı Türü / Cihaz</th>
                         <th>Durum</th>
-                        <th>Senkronizasyon</th>
                     </tr>
                 </thead>
                 <tbody id="playerTableBody">
-                    <tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 30px;">Veri bekleniyor...</td></tr>
+                    <tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 30px;">Aktif oyuncu bulunmuyor...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -75,8 +84,10 @@
         const dot = document.getElementById('dot');
         const statusText = document.getElementById('statusText');
         const metricPlayers = document.getElementById('metricPlayers');
+        const metricViewers = document.getElementById('metricViewers');
         const metricUptime = document.getElementById('metricUptime');
         const playerTableBody = document.getElementById('playerTableBody');
+        const playerCounter = document.getElementById('playerCounter');
 
         setInterval(() => {
             const diff = Math.floor((Date.now() - startTime) / 1000);
@@ -93,28 +104,38 @@
             ws.onopen = () => {
                 dot.className = "dot online";
                 statusText.textContent = "Bağlantı Aktif";
+                // Panele girdiğimizi sunucuya bildiriyoruz (Ziyaretçi sayacına eklenecek)
+                ws.send(JSON.stringify({ t: 'dashboard_join' }));
             };
 
             ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
-                    if (data.t === 's') {
+                    
+                    // İzleyici/Ziyaretçi Sayısı
+                    if (data.t === 'viewers') {
+                        metricViewers.textContent = data.count;
+                    } 
+                    // Oyuncu Listesi Güncellemesi
+                    else if (data.t === 's') {
                         const players = data.p;
                         const keys = Object.keys(players);
                         metricPlayers.textContent = keys.length;
+                        playerCounter.textContent = keys.length + ' Oyuncu';
 
                         if (keys.length > 0) {
                             let html = '';
-                            for (const id in players) {
+                            for (const id in keys) {
+                                const p = players[keys[id]];
                                 html += '<tr>' +
-                                    '<td style="font-weight:700; color:#fca5a5;">' + id + '</td>' +
-                                    '<td style="color:#22c55e;">● Aktif</td>' +
-                                    '<td style="color:#fca5a5; opacity:0.7;">Senkronize</td>' +
+                                    '<td style="font-weight:700; color:#fca5a5;">' + (p.name || 'İsimsiz Oyuncu') + '</td>' +
+                                    '<td><span class="badge-device">' + (p.device || 'Game Client') + '</span></td>' +
+                                    '<td style="color:#22c55e;">● Oyunda</td>' +
                                 '</tr>';
                             }
                             playerTableBody.innerHTML = html;
                         } else {
-                            playerTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 20px;">Aktif bağlantı yok</td></tr>';
+                            playerTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 20px;">Aktif oyuncu bulunmuyor</td></tr>';
                         }
                     }
                 } catch (e) {}
