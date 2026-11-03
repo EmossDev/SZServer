@@ -1,5 +1,4 @@
-// index.js -> Kurumsal Bordo/Kırmızı Arayüz ve Frontend Scriptleri
-module.exports = `<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
@@ -50,10 +49,10 @@ module.exports = `<!DOCTYPE html>
 <body>
 
     <div class="header">
-        <h1>SZSERVER <span>2-JS ARCHITECTURE</span></h1>
+        <h1>SZSERVER <span>ENTERPRISE DASHBOARD</span></h1>
         <div class="status-pill">
             <span id="dot" class="dot"></span>
-            <span id="statusText">Sunucuya Bağlanıyor...</span>
+            <span id="statusText">Bağlantı Bekleniyor...</span>
         </div>
     </div>
 
@@ -107,7 +106,7 @@ module.exports = `<!DOCTYPE html>
             <div class="panel-title">Sistem Konsol Akışı</div>
             <div class="console-container">
                 <div id="logBox" class="log-box">
-                    <div>[Sistem] index.js arayüzü başarıyla yüklendi.</div>
+                    <div>[Sistem] Panel başarıyla yüklendi, WebSocket bekleniyor...</div>
                 </div>
                 
                 <div>
@@ -171,7 +170,7 @@ module.exports = `<!DOCTYPE html>
             ws.onopen = () => {
                 dot.className = "dot online";
                 statusText.textContent = "Bağlantı Aktif";
-                addLog('Sunucu ile WebSocket bağı kuruldu.');
+                addLog('Sunucu ile WebSocket bağı kuruştu.');
             };
 
             ws.onmessage = (event) => {
@@ -218,4 +217,4 @@ module.exports = `<!DOCTYPE html>
         window.onload = connect;
     </script>
 </body>
-</html>`;
+</html>
