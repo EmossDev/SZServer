@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sector Zero ServerUI</title>
+    <title>Sector Zero // Control Center</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: #060102; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; padding: 20px; padding-bottom: 100px; }
@@ -19,7 +19,19 @@
         .metric-card { background: #100204; border: 1px solid #7f1d1d44; padding: 20px; border-radius: 14px; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         .metric-card::after { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #dc2626; }
         .metric-card label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #fca5a5; font-weight: 600; }
-        .metric-card .value { font-size: 1.5rem; font-weight: bold; color: #f8fafc; margin-top: 8px; font-family: monospace; }
+        
+        /* Gradient Geçişli "Owned by EmossDev" Yazısı */
+        .metric-card .gradient-text { 
+            font-size: 1.3rem; 
+            font-weight: 800; 
+            margin-top: 8px; 
+            font-family: monospace; 
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, #fca5a5 0%, #ef4444 50%, #ffffff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        }
 
         .panel { background: #100204; border: 1px solid #7f1d1d44; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
         .panel-title { font-size: 0.95rem; font-weight: 600; color: #fca5a5; margin-bottom: 15px; border-bottom: 1px solid #7f1d1d44; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
@@ -112,11 +124,11 @@
     <div class="dashboard-grid">
         <div class="metric-card">
             <label>Aktif Bağlantılar</label>
-            <div id="metricPlayers" class="value">0</div>
+            <div id="metricPlayers" class="value" style="font-size: 1.5rem; font-weight: bold; color: #f8fafc; margin-top: 8px; font-family: monospace;">0</div>
         </div>
         <div class="metric-card" style="border-left-color: #991b1b;">
-            <label>Gerçek Sunucu Uptime</label>
-            <div id="metricUptime" class="value">00:00:00</div>
+            <label>Sistem Yetkilisi</label>
+            <div class="gradient-text">Owned by EmossDev</div>
         </div>
     </div>
 
@@ -142,8 +154,8 @@
     </div>
 
     <div class="footer">
-        <div>Sector Zero Core</div>
-        <div>Made by <span style="color: #f87171;">EmossDev  </span></div>
+        <div>Sector Zero Core Architecture.</div>
+        <div>Developer by <span style="color: #f87171;">EmossDev</span></div>
     </div>
 
     <!-- Altta Yüzen Müzik Barı -->
@@ -179,7 +191,6 @@
         let player;
         let isBarMinimized = false;
 
-        // Çalma Listesindeki Tam 50 NCS Parçası
         const ncsPlaylist = [
             { id: "J2X5mJ3HDYE", name: "DEAF KEV - Invincible" },
             { id: "K4DyBUG242c", name: "Cartoon - On & On" },
@@ -198,17 +209,14 @@
             { id: "8ZXEGtrtEoU", name: "RetroVision - Puzzle" },
             { id: "f2KcdmlUnfo", name: "Jone - Tomorrow" },
             { id: "98JeyJAjfbo", name: "Jim Yosef - Eclipse" },
-            { id: "jK2aIUmmdP4", name: "RetroVision - Campfire" },
             { id: "CuklIb9d3fI", name: "Disfigure - Blank" },
             { id: "wWwL_U73kSw", name: "Subtact - Away" },
             { id: "YwYdM_Y-W_0", name: "Itro & Tobu - Cloud 9" },
             { id: "K89Zc6k1uY0", name: "Jo Cohen & Sex Whales - We Are" },
             { id: "U4wV_Y03L2Y", name: "Axol - Mars" },
             { id: "3jK5h1l2X8A", name: "Distrion & Alex Skrindo - Entropy" },
-            { id: "J2X5mJ3HDYE", name: "DEAF KEV - Invincible (Pt. II)" },
             { id: "v1pbbrXNdso", name: "NCS: The Best of Electronic" },
             { id: "7h1W-q-2h1c", name: "Janji - Horizon" },
-            { id: "k1h2n3m4p5o", name: "Ancients - The Awakening" },
             { id: "p1o2i3u4y5t", name: "Culture Code - Make Me Move" },
             { id: "q1w2e3r4t5y", name: "K-391 - Earth" },
             { id: "z1x2c3v4b5n", name: "Laszlo - Here We Are" },
@@ -216,11 +224,10 @@
             { id: "a1s2d3f4g5h", name: "Electro-Light - Symbolism" },
             { id: "qAZwsxEDCrf", name: "Phantom - Lights" },
             { id: "tGBYhnUJMik", name: "TULE - Lost" },
-            { id: "oP[ol,mknJB", name: "Caliago - Overdrive" },
             { id: "1234567890q", name: "Diviners - Savannah" },
             { id: "abcdefghijk", name: "Jone - Without You" },
             { id: "lmnopqrsTUV", name: "K-391 & Alan Walker - Ignite" },
-            { id: "zyxwvutsrqp", name: "NCS Megamix 2026" },
+            { id: "zyxwvutsrqp", name: "NCS Megamix" },
             { id: "mnbvcxzlkjh", name: "Lost Sky - Fearless" },
             { id: "poiuytrewq0", name: "Spektrem - Shine" },
             { id: "asdfghjklpoi", name: "Strahinja - Cyberpunk" },
@@ -281,13 +288,6 @@
             document.getElementById('trackTitle').textContent = ncsPlaylist[currentTrackIndex].name;
         }
 
-        function formatUptime(totalSecs) {
-            const h = String(Math.floor(totalSecs / 3600)).padStart(2, '0');
-            const m = String(Math.floor((totalSecs % 3600) / 60)).padStart(2, '0');
-            const s = String(totalSecs % 60).padStart(2, '0');
-            return h + ':' + m + ':' + s;
-        }
-
         function connect() {
             const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
             ws = new WebSocket(proto + location.host);
@@ -300,11 +300,6 @@
             ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
-                    
-                    if (data.up !== undefined) {
-                        document.getElementById('metricUptime').textContent = formatUptime(data.up);
-                    }
-
                     if (data.t === 's') {
                         const players = data.p;
                         const keys = Object.keys(players);
