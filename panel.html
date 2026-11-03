@@ -9,7 +9,9 @@
         body { background-color: #060102; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; padding: 20px; padding-bottom: 100px; }
         
         .header { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #180206 0%, #080102 100%); border: 1px solid #7f1d1d; padding: 20px 30px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 30px rgba(127, 29, 29, 0.3); }
-        .header h1 { font-size: 1.4rem; color: #f87171; letter-spacing: 2.5px; font-weight: 800; }
+        .header-title-box { display: flex; flex-direction: column; gap: 4px; }
+        .header h1 { font-size: 1.25rem; color: #f87171; letter-spacing: 2px; font-weight: 800; line-height: 1.2; }
+        .sub-title { font-size: 0.75rem; color: #fca5a5; opacity: 0.8; letter-spacing: 0.5px; font-weight: 500; }
         
         .status-pill { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; background: #1f060b; padding: 8px 16px; border-radius: 20px; border: 1px solid #991b1b; }
         .dot { width: 9px; height: 9px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 10px #ef4444; }
@@ -20,34 +22,40 @@
         .metric-card::after { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #dc2626; }
         .metric-card label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #fca5a5; font-weight: 600; }
         
-        /* Sürekli hareket eden akıcı animasyonlu gradient yazı */
+        /* Sürekli sağa doğru akan akıcı animasyonlu gradient yazı */
         .metric-card .gradient-text { 
             font-size: 1.3rem; 
             font-weight: 800; 
             margin-top: 8px; 
             font-family: monospace; 
             letter-spacing: 0.5px;
-            background: linear-gradient(270deg, #fca5a5, #ef4444, #ffffff, #ef4444, #fca5a5);
-            background-size: 300% 300%;
+            background: linear-gradient(90deg, #fca5a5, #ef4444, #ffffff, #ef4444, #fca5a5);
+            background-size: 300% 100%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            animation: gradientMove 4s ease infinite;
+            animation: gradientScroll 4s linear infinite;
             text-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
         }
 
-        @keyframes gradientMove {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        @keyframes gradientScroll {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 300% 0%; }
         }
 
-        .panel { background: #100204; border: 1px solid #7f1d1d44; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-        .panel-title { font-size: 0.95rem; font-weight: 600; color: #fca5a5; margin-bottom: 15px; border-bottom: 1px solid #7f1d1d44; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-
-        .table-container { overflow-x: auto; flex: 1; max-height: 350px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
-        th { color: #fca5a5; font-weight: 600; padding: 10px; border-bottom: 1px solid #7f1d1d44; }
-        td { padding: 12px 10px; border-bottom: 1px solid #7f1d1d11; color: #e2e8f0; font-family: monospace; }
+        /* Ortalanmış ve Birleştirilmiş Footer */
+        .footer { 
+            margin-top: auto; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            font-size: 0.75rem; 
+            color: #94a3b8; 
+            border-top: 1px solid #7f1d1d33; 
+            padding-top: 20px; 
+            gap: 12px;
+            text-align: center;
+        }
+        .footer span { color: #f87171; font-weight: bold; font-family: monospace; }
 
         /* Yüzen Müzik Barı */
         .music-bar { 
@@ -114,15 +122,15 @@
         .icon-btn-outline:hover { background: #4a0e17; color: #fff; }
 
         #youtube-player-container { display: none; }
-
-        .footer { margin-top: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #64748b; border-top: 1px solid #7f1d1d33; padding-top: 15px; }
-        .footer span { color: #f87171; font-weight: bold; font-family: monospace; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>SZSERVER</h1>
+        <div class="header-title-box">
+            <h1>SZSERVER</h1>
+            <div class="sub-title">Sector Zero Sunucu Sistemi</div>
+        </div>
         <div class="status-pill">
             <span id="dot" class="dot"></span>
             <span id="statusText">Bağlantı Kuruluyor...</span>
@@ -140,30 +148,11 @@
         </div>
     </div>
 
-    <div class="panel">
-        <div class="panel-title">
-            <span>Anlık İstemci Tablosu</span>
-            <span id="clientCounter" style="font-size: 0.75rem; color: #fca5a5;">0 Aktif</span>
-        </div>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>İstemci ID</th>
-                        <th>Durum</th>
-                        <th>Senkronizasyon</th>
-                    </tr>
-                </thead>
-                <tbody id="playerTableBody">
-                    <tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 30px;">İstemci bekleniyor...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
+    <!-- Ortalanmış Footer -->
     <div class="footer">
-        <div>Sector Zero Core Architecture.</div>
-        <div>Developer by <span style="color: #f87171;">EmossDev</span></div>
+        <div>Sector Zero Core</div>
+        <span style="color: #7f1d1d;">&bull;</span>
+        <div>Made by <span>EmossDev</span></div>
     </div>
 
     <!-- Altta Yüzen Müzik Barı -->
@@ -312,22 +301,6 @@
                         const players = data.p;
                         const keys = Object.keys(players);
                         document.getElementById('metricPlayers').textContent = keys.length;
-                        document.getElementById('clientCounter').textContent = keys.length + ' Aktif';
-
-                        if (keys.length > 0) {
-                            let html = '';
-                            for (const id in keys) {
-                                const clientId = keys[id];
-                                html += '<tr>' +
-                                    '<td style="font-weight:700; color:#fca5a5;">' + clientId + '</td>' +
-                                    '<td style="color:#22c55e;">● Aktif</td>' +
-                                    '<td style="color:#fca5a5; opacity:0.7;">Senkronize</td>' +
-                                '</tr>';
-                            }
-                            document.getElementById('playerTableBody').innerHTML = html;
-                        } else {
-                            document.getElementById('playerTableBody').innerHTML = '<tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 30px;">Aktif bağlantı yok</td></tr>';
-                        }
                     }
                 } catch (e) {}
             };
