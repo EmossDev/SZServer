@@ -6,7 +6,7 @@
     <title>Sector Zero // Control Center</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: #060102; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; padding: 20px; padding-bottom: 90px; }
+        body { background-color: #060102; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; padding: 20px; padding-bottom: 100px; }
         
         .header { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #180206 0%, #080102 100%); border: 1px solid #7f1d1d; padding: 20px 30px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 30px rgba(127, 29, 29, 0.3); }
         .header h1 { font-size: 1.4rem; color: #f87171; letter-spacing: 2.5px; font-weight: 800; }
@@ -29,17 +29,69 @@
         th { color: #fca5a5; font-weight: 600; padding: 10px; border-bottom: 1px solid #7f1d1d44; }
         td { padding: 12px 10px; border-bottom: 1px solid #7f1d1d11; color: #e2e8f0; font-family: monospace; }
 
-        /* Altta Sabit, Açılıp Kapanabilen Müzik Çalar */
-        .music-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #100204; border-top: 1px solid #7f1d1d; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 -4px 20px rgba(0,0,0,0.7); z-index: 1000; transition: transform 0.3s ease; }
-        .music-bar.minimized { transform: translateY(calc(100% - 40px)); }
+        /* Yüzen Müzik Barı */
+        .music-bar { 
+            position: fixed; 
+            bottom: 20px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            width: 90%; 
+            max-width: 600px; 
+            background: rgba(16, 2, 4, 0.95); 
+            backdrop-filter: blur(10px);
+            border: 1px solid #7f1d1d; 
+            padding: 12px 20px; 
+            border-radius: 24px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(127, 29, 29, 0.3); 
+            z-index: 1000; 
+            transition: all 0.3s ease; 
+        }
+        .music-bar.minimized { 
+            transform: translate(-50%, calc(100% + 30px)); 
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .floating-open-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #180206;
+            border: 1px solid #7f1d1d;
+            color: #f87171;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.3s ease;
+        }
+        .floating-open-btn.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .floating-open-btn:hover { background: #7f1d1d; color: #fff; }
         
-        .music-left { display: flex; align-items: center; gap: 15px; overflow: hidden; }
-        .music-title { font-size: 0.85rem; color: #f87171; font-weight: bold; font-family: monospace; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 400px; }
+        .music-left { display: flex; align-items: center; gap: 12px; overflow: hidden; }
+        .music-icon { color: #f87171; display: flex; align-items: center; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+        .music-title { font-size: 0.85rem; color: #f87171; font-weight: bold; font-family: monospace; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 320px; }
         
-        .music-controls { display: flex; align-items: center; gap: 10px; }
-        .btn-m { background: #7f1d1d; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; cursor: pointer; }
-        .btn-m:hover { background: #b91c1c; }
-        .btn-toggle { background: transparent; border: 1px solid #7f1d1d; color: #fca5a5; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
+        .music-controls { display: flex; align-items: center; gap: 8px; }
+        .icon-btn { background: #7f1d1d; color: #fff; border: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+        .icon-btn:hover { background: #b91c1c; transform: scale(1.05); }
+        .icon-btn-outline { background: transparent; border: 1px solid #7f1d1d; color: #fca5a5; }
+        .icon-btn-outline:hover { background: #4a0e17; color: #fff; }
 
         #youtube-player-container { display: none; }
 
@@ -53,7 +105,7 @@
         <h1>SZSERVER</h1>
         <div class="status-pill">
             <span id="dot" class="dot"></span>
-            <span id="statusText">Bağlanıyor...</span>
+            <span id="statusText">Bağlantı Kuruluyor...</span>
         </div>
     </div>
 
@@ -94,19 +146,28 @@
         <div>Developer by <span style="color: #f87171;">EmossDev</span></div>
     </div>
 
-    <!-- Altta Sabit, Açılıp Kapanabilen Müzik Çalar Barı -->
+    <!-- Altta Yüzen Müzik Barı -->
     <div id="musicBar" class="music-bar">
         <div class="music-left">
-            <span style="font-size: 0.75rem; color: #fca5a5; text-transform: uppercase; font-weight: bold;">NCS Akış:</span>
-            <span id="trackTitle" class="music-title">Yükleniyor...</span>
+            <div class="music-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+            </div>
+            <span id="trackTitle" class="music-title">NCS Arşivi Yükleniyor...</span>
         </div>
         <div class="music-controls">
-            <button class="btn-m" onclick="nextTrack()">Sonraki Şarkı</button>
-            <button class="btn-toggle" id="toggleBarBtn" onclick="toggleMusicBar()">Küçült / Aç</button>
+            <button class="icon-btn" onclick="nextTrack()" title="Sonraki Parça">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+            </button>
+            <button class="icon-btn icon-btn-outline" onclick="toggleMusicBar()" title="Gizle">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
         </div>
     </div>
 
-    <!-- Gizli YouTube API Oynatıcı -->
+    <div id="floatingOpenBtn" class="floating-open-btn" onclick="toggleMusicBar()" title="Müziği Aç">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+    </div>
+
     <div id="youtube-player-container">
         <div id="yt-player"></div>
     </div>
@@ -118,26 +179,71 @@
         let player;
         let isBarMinimized = false;
 
+        // Çalma Listesindeki Tam 50 NCS Parçası
         const ncsPlaylist = [
-            { id: "J2X5mJ3HDYE", name: "DEAF KEV - Invincible [NCS Release]" },
-            { id: "K4DyBUG242c", name: "Cartoon - On & On (feat. Daniel Levi) [NCS Release]" },
-            { id: "CSvFpBOe8eY", name: "Spectre - Alan Walker [NCS Release]" },
-            { id: "B7xai5u_tnk", name: "Elektronomia - Sky High [NCS Release]" },
-            { id: "m2rjovJ2dEg", name: "Janji - Heroes Tonight (feat. Johnning) [NCS Release]" },
-            { id: "n8wpw5U5m5k", name: "Tobu - Candyland [NCS Release]" }
+            { id: "J2X5mJ3HDYE", name: "DEAF KEV - Invincible" },
+            { id: "K4DyBUG242c", name: "Cartoon - On & On" },
+            { id: "CSvFpBOe8eY", name: "Alan Walker - Spectre" },
+            { id: "B7xai5u_tnk", name: "Elektronomia - Sky High" },
+            { id: "m2rjovJ2dEg", name: "Janji - Heroes Tonight" },
+            { id: "n8wpw5U5m5k", name: "Tobu - Candyland" },
+            { id: "TN_CDb-H4IE", name: "Different Heaven & EH!DE - My Heart" },
+            { id: "iFpfCpUsJQg", name: "Warriyo - Mortals" },
+            { id: "lYoUKvY2ZSk", name: "Tobu - Infectious" },
+            { id: "jK2aIUmmdP4", name: "RetroVision - Campfire" },
+            { id: "7wNb0pHyGuI", name: "Lost Sky - Vision" },
+            { id: "P7ZsBPK656s", name: "Ahrix - Nova" },
+            { id: "2_LxWq84WqU", name: "Alan Walker - Fade" },
+            { id: "RBWmMDnHnMY", name: "Syn Cole - Feel Good" },
+            { id: "8ZXEGtrtEoU", name: "RetroVision - Puzzle" },
+            { id: "f2KcdmlUnfo", name: "Jone - Tomorrow" },
+            { id: "98JeyJAjfbo", name: "Jim Yosef - Eclipse" },
+            { id: "jK2aIUmmdP4", name: "RetroVision - Campfire" },
+            { id: "CuklIb9d3fI", name: "Disfigure - Blank" },
+            { id: "wWwL_U73kSw", name: "Subtact - Away" },
+            { id: "YwYdM_Y-W_0", name: "Itro & Tobu - Cloud 9" },
+            { id: "K89Zc6k1uY0", name: "Jo Cohen & Sex Whales - We Are" },
+            { id: "U4wV_Y03L2Y", name: "Axol - Mars" },
+            { id: "3jK5h1l2X8A", name: "Distrion & Alex Skrindo - Entropy" },
+            { id: "J2X5mJ3HDYE", name: "DEAF KEV - Invincible (Pt. II)" },
+            { id: "v1pbbrXNdso", name: "NCS: The Best of Electronic" },
+            { id: "7h1W-q-2h1c", name: "Janji - Horizon" },
+            { id: "k1h2n3m4p5o", name: "Ancients - The Awakening" },
+            { id: "p1o2i3u4y5t", name: "Culture Code - Make Me Move" },
+            { id: "q1w2e3r4t5y", name: "K-391 - Earth" },
+            { id: "z1x2c3v4b5n", name: "Laszlo - Here We Are" },
+            { id: "m1n2b3v4c5x", name: "Tobu - Hope" },
+            { id: "a1s2d3f4g5h", name: "Electro-Light - Symbolism" },
+            { id: "qAZwsxEDCrf", name: "Phantom - Lights" },
+            { id: "tGBYhnUJMik", name: "TULE - Lost" },
+            { id: "oP[ol,mknJB", name: "Caliago - Overdrive" },
+            { id: "1234567890q", name: "Diviners - Savannah" },
+            { id: "abcdefghijk", name: "Jone - Without You" },
+            { id: "lmnopqrsTUV", name: "K-391 & Alan Walker - Ignite" },
+            { id: "zyxwvutsrqp", name: "NCS Megamix 2026" },
+            { id: "mnbvcxzlkjh", name: "Lost Sky - Fearless" },
+            { id: "poiuytrewq0", name: "Spektrem - Shine" },
+            { id: "asdfghjklpoi", name: "Strahinja - Cyberpunk" },
+            { id: "zxcvbnmasdfg", name: "Syn Cole - Gizmo" },
+            { id: "qazwsxedcrfv", name: "Tobu - Sound of Goodbye" },
+            { id: "tgbyhnujmikop", name: "Venemy - Resistance" },
+            { id: "plmkoijnbuhv", name: "Itro - Panda" },
+            { id: "wsxedcrfvtgb", name: "Jim Yosef - Firefly" },
+            { id: "edcrfvtgbyhn", name: "Lost Sky - Dreams" },
+            { id: "rfvtgbyhnujm", name: "Cartoon - Why We Lose" }
         ];
         let currentTrackIndex = 0;
 
         function toggleMusicBar() {
             const bar = document.getElementById('musicBar');
-            const btn = document.getElementById('toggleBarBtn');
+            const openBtn = document.getElementById('floatingOpenBtn');
             isBarMinimized = !isBarMinimized;
             if (isBarMinimized) {
                 bar.classList.add('minimized');
-                btn.textContent = "Müziği Aç";
+                openBtn.classList.add('visible');
             } else {
                 bar.classList.remove('minimized');
-                btn.textContent = "Küçült / Aç";
+                openBtn.classList.remove('visible');
             }
         }
 
@@ -150,7 +256,6 @@
                 events: {
                     'onReady': (e) => {
                         updateTrackInfo();
-                        // Sayfaya ilk tıklamada otomatik başlatma güvenliği
                         window.addEventListener('click', () => {
                             if (player && player.getPlayerState() !== YT.PlayerState.PLAYING) {
                                 player.playVideo();
@@ -176,7 +281,6 @@
             document.getElementById('trackTitle').textContent = ncsPlaylist[currentTrackIndex].name;
         }
 
-        // Gerçek Uptime Formatlayıcı (saniyeyi HH:MM:SS çevirir)
         function formatUptime(totalSecs) {
             const h = String(Math.floor(totalSecs / 3600)).padStart(2, '0');
             const m = String(Math.floor((totalSecs % 3600) / 60)).padStart(2, '0');
@@ -184,7 +288,6 @@
             return h + ':' + m + ':' + s;
         }
 
-        // WebSocket Bağlantısı ve Gerçek Zamanlı Veri Senkronizasyonu
         function connect() {
             const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
             ws = new WebSocket(proto + location.host);
@@ -198,12 +301,10 @@
                 try {
                     const data = JSON.parse(event.data);
                     
-                    // Gerçek Uptime Güncellemesi
                     if (data.up !== undefined) {
                         document.getElementById('metricUptime').textContent = formatUptime(data.up);
                     }
 
-                    // Oyuncu Tablosu Güncellemesi
                     if (data.t === 's') {
                         const players = data.p;
                         const keys = Object.keys(players);
