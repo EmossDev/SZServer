@@ -33,19 +33,13 @@
         th { color: #fca5a5; font-weight: 600; padding: 10px; border-bottom: 1px solid #7f1d1d44; }
         td { padding: 12px 10px; border-bottom: 1px solid #7f1d1d11; color: #e2e8f0; font-family: monospace; }
 
-        /* NCS YouTube Player Tasarımı */
+        /* NCS YouTube Player Tasarımı (Butonsuz) */
         .player-box { display: flex; flex-direction: column; gap: 12px; }
-        .track-info { background: #080103; border: 1px solid #7f1d1d66; padding: 12px 15px; border-radius: 10px; font-family: monospace; }
-        .track-title { font-size: 0.85rem; color: #f87171; font-weight: bold; margin-bottom: 4px; }
-        .track-status { font-size: 0.7rem; color: #94a3b8; }
+        .track-info { background: #080103; border: 1px solid #7f1d1d66; padding: 15px; border-radius: 10px; font-family: monospace; }
+        .track-title { font-size: 0.85rem; color: #f87171; font-weight: bold; margin-bottom: 6px; }
+        .track-status { font-size: 0.75rem; color: #22c55e; display: flex; align-items: center; gap: 6px; }
+        .track-status::before { content: ''; width: 7px; height: 7px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e; }
 
-        .player-controls { display: flex; gap: 10px; }
-        .btn { flex: 1; background: #7f1d1d; color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.8rem; }
-        .btn:hover { background: #b91c1c; }
-        .btn-outline { background: transparent; border: 1px solid #7f1d1d; color: #fca5a5; }
-        .btn-outline:hover { background: #4a0e17; }
-
-        /* Gizli YouTube API Çerçevesi */
         #youtube-player-container { display: none; }
 
         .footer { margin-top: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #64748b; border-top: 1px solid #7f1d1d33; padding-top: 15px; }
@@ -96,22 +90,15 @@
             </div>
         </div>
 
-        <!-- Sağ: NCS YouTube Playlist Oynatıcısı -->
+        <!-- Sağ: Otomatik NCS Müzik Çalar (Butonsuz) -->
         <div class="panel">
-            <div class="panel-title">NCS YouTube Müzik Listesi</div>
+            <div class="panel-title">NCS Müzik Akışı</div>
             <div class="player-box">
                 <div class="track-info">
-                    <div id="trackTitle" class="track-title">Parça: Yükleniyor...</div>
-                    <div id="trackStatus" class="track-status">Durum: Sıradaki parçaya geçiliyor</div>
+                    <div id="trackTitle" class="track-title">Parça: Müzik Yükleniyor...</div>
+                    <div id="trackStatus" class="track-status">Sayfaya ilk dokunuş bekleniyor...</div>
                 </div>
 
-                <!-- Kontroller -->
-                <div class="player-controls">
-                    <button class="btn" id="playPauseBtn" onclick="togglePlay()">Oynat / Durdur</button>
-                    <button class="btn btn-outline" onclick="nextTrack()">Sonraki Parça</button>
-                </div>
-
-                <!-- YouTube API için görünmeyen alan -->
                 <div id="youtube-player-container">
                     <div id="yt-player"></div>
                 </div>
@@ -124,16 +111,14 @@
         <div>Developer by <span style="color: #f87171;">EmossDev</span></div>
     </div>
 
-    <!-- YouTube IFrame API Scripti -->
     <script src="https://www.youtube.com/iframe_api"></script>
 
     <script>
         let ws = null;
         let startTime = Date.now();
         let player;
-        let isPlaying = false;
+        let hasStarted = false;
 
-        // NCS'nin En Popüler Efsane Parçalarının YouTube ID Listesi (Sırayla Çalar)
         const ncsPlaylist = [
             { id: "J2X5mJ3HDYE", name: "DEAF KEV - Invincible [NCS Release]" },
             { id: "K4DyBUG242c", name: "Cartoon - On & On (feat. Daniel Levi) [NCS Release]" },
@@ -144,14 +129,13 @@
         ];
         let currentTrackIndex = 0;
 
-        // YouTube API Hazır Olduğunda Çalışır
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('yt-player', {
                 height: '0',
                 width: '0',
                 videoId: ncsPlaylist[currentTrackIndex].id,
                 playerVars: {
-                    'autoplay': 0,
+                    'autoplay': 1,
                     'controls': 0,
                     'loop': 0
                 },
@@ -164,39 +148,30 @@
 
         function onPlayerReady(event) {
             updateTrackInfo();
+            // Tarayıcı kuralı gereği kullanıcı sayfaya ilk tıkladığı/dokunduğu an otomatik başlatır
+            window.addEventListener('pointerdown', startMusicAutomatically, { once: true });
+            window.addEventListener('keydown', startMusicAutomatically, { once: true });
         }
 
-        // Şarkı bittiğinde (State 0) otomatik olarak sıradakine geçer
+        function startMusicAutomatically() {
+            if (!hasStarted && player) {
+                hasStarted = true;
+                player.playVideo();
+                document.getElementById('trackStatus').textContent = "Çalıyor (Otomatik Akış)";
+            }
+        }
+
+        // Şarkı bittiğinde otomatik olarak listedeki sonraki şarkıya geçer
         function onPlayerStateChange(event) {
             if (event.data === YT.PlayerState.ENDED) {
-                nextTrack();
+                currentTrackIndex = (currentTrackIndex + 1) % ncsPlaylist.length;
+                player.loadVideoById(ncsPlaylist[currentTrackIndex].id);
+                updateTrackInfo();
             }
-        }
-
-        function togglePlay() {
-            if (!player) return;
-            const state = player.getPlayerState();
-            if (state === YT.PlayerState.PLAYING) {
-                player.pauseVideo();
-                isPlaying = false;
-                document.getElementById('trackStatus').textContent = "Durum: Duraklatıldı";
-            } else {
-                player.playVideo();
-                isPlaying = true;
-                document.getElementById('trackStatus').textContent = "Durum: Çalıyor";
-            }
-        }
-
-        function nextTrack() {
-            currentTrackIndex = (currentTrackIndex + 1) % ncsPlaylist.length;
-            player.loadVideoById(ncsPlaylist[currentTrackIndex].id);
-            updateTrackInfo();
-            isPlaying = true;
         }
 
         function updateTrackInfo() {
             document.getElementById('trackTitle').textContent = "Parça: " + ncsPlaylist[currentTrackIndex].name;
-            document.getElementById('trackStatus').textContent = "Durum: Çalıyor";
         }
 
         // Uptime Sayacı
