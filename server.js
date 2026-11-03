@@ -1,4 +1,4 @@
-// Sector Zero - Gerçek Uptime Destekli Saf Motor (server.js)
+// Sector Zero - Saf ve Canlı Ping Destekli Motor (server.js)
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -24,8 +24,15 @@ wss.on('connection', ws => {
   const c = { ws, p: {}, cnt: 0 }; C.set(id, c); ws.send(JSON.stringify({ t: 'hi', id })); dirty = true;
   
   ws.on('message', m => {
-    if (++c.cnt > 80) return;
     let d; try { d = JSON.parse(m) } catch (e) { return }
+
+    // Canlı Ping / Pong Yanıtı (MS Ölçümü İçin)
+    if (d.t === 'ping') {
+      ws.send(JSON.stringify({ t: 'pong', time: d.time }));
+      return;
+    }
+
+    if (++c.cnt > 80) return;
     if (d.t !== 'p' || !d.p || typeof d.p !== 'object') return;
     for (const k in d.p) {
       if (!/^[A-Za-z_][A-Za-z0-9_]{0,15}$/.test(k)) continue;
@@ -42,11 +49,10 @@ wss.on('connection', ws => {
 
 setInterval(() => { for (const c of C.values()) c.cnt = 0 }, 1000);
 
-// Her saniye aktif istemcilere gerçek sunucu uptime (process.uptime) bilgisini gönderiyoruz
+// Her saniye aktif istemcilere player/istemci verilerini gönderiyoruz
 setInterval(() => {
-  const uptimeSec = Math.floor(process.uptime());
   const all = {}; for (const [id, c] of C) all[id] = c.p;
-  const s = JSON.stringify({ t: 's', up: uptimeSec, p: all });
+  const s = JSON.stringify({ t: 's', p: all });
   for (const c of C.values()) if (c.ws.readyState === 1) c.ws.send(s);
 }, 1000);
 
