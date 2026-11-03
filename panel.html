@@ -6,7 +6,7 @@
     <title>Sector Zero // Control Center</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: #060102; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; padding: 20px; cursor: default; }
+        body { background-color: #060102; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; padding: 20px; }
         
         .header { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #180206 0%, #080102 100%); border: 1px solid #7f1d1d; padding: 20px 30px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 30px rgba(127, 29, 29, 0.3); }
         .header h1 { font-size: 1.4rem; color: #f87171; letter-spacing: 2.5px; font-weight: 800; display: flex; align-items: center; }
@@ -35,8 +35,7 @@
         .player-box { display: flex; flex-direction: column; gap: 12px; }
         .track-info { background: #080103; border: 1px solid #7f1d1d66; padding: 15px; border-radius: 10px; font-family: monospace; }
         .track-title { font-size: 0.85rem; color: #f87171; font-weight: bold; margin-bottom: 6px; }
-        .track-status { font-size: 0.75rem; color: #22c55e; display: flex; align-items: center; gap: 6px; }
-        .track-status::before { content: ''; width: 7px; height: 7px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e; }
+        .track-status { font-size: 0.75rem; color: #22c55e; }
 
         .footer { margin-top: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #64748b; border-top: 1px solid #7f1d1d33; padding-top: 15px; }
         .footer span { color: #f87171; font-weight: bold; font-family: monospace; }
@@ -48,7 +47,7 @@
         <h1>SZSERVER</h1>
         <div class="status-pill">
             <span id="dot" class="dot"></span>
-            <span id="statusText">Bağlantı Kuruluyor...</span>
+            <span id="statusText">Bağlanıyor...</span>
         </div>
     </div>
 
@@ -86,13 +85,13 @@
             </div>
         </div>
 
-        <!-- Sağ: Müzik Akış Bilgisi -->
+        <!-- Sağ: Müzik Bilgisi -->
         <div class="panel">
             <div class="panel-title">NCS Müzik Akışı</div>
             <div class="player-box">
                 <div class="track-info">
-                    <div id="trackTitle" class="track-title">Parça: NCS Electronic Stream</div>
-                    <div id="trackStatus" class="track-status" id="statusLabel">Ekrana ilk dokunuş bekleniyor...</div>
+                    <div class="track-title">Parça: NCS Electronic Stream</div>
+                    <div class="track-status">Sistem Kararlı ve Akıcı</div>
                 </div>
             </div>
         </div>
@@ -106,38 +105,14 @@
     <script>
         let ws = null;
         let startTime = Date.now();
-        let audioElem = null;
-        let isStarted = false;
+        const dot = document.getElementById('dot');
+        const statusText = document.getElementById('statusText');
+        const metricPlayers = document.getElementById('metricPlayers');
+        const metricUptime = document.getElementById('metricUptime');
+        const playerTableBody = document.getElementById('playerTableBody');
+        const clientCounter = document.getElementById('clientCounter');
 
-        const audioStreamUrl = "https://stream.nocopyrightsounds.com/";
-
-        // Bütün ekranda herhangi bir tıklamayı/dokunmayı yakalayan evrensel tetikleyici
-        function triggerGlobalAudio() {
-            if (isStarted) return;
-            isStarted = true;
-
-            try {
-                audioElem = new Audio();
-                audioElem.src = audioStreamUrl;
-                audioElem.crossOrigin = "anonymous";
-                audioElem.loop = true;
-                
-                audioElem.play().then(() => {
-                    document.getElementById('trackStatus').textContent = "Çalıyor (Canlı Akış Aktif)";
-                }).catch(e => {
-                    isStarted = false; // Hata olursa tekrar dener
-                });
-            } catch (err) {
-                isStarted = false;
-            }
-        }
-
-        // Sayfadaki boşluk, tablo, kartlar dahil HER YERİ dinle
-        window.addEventListener('click', triggerGlobalAudio, { once: true });
-        window.addEventListener('touchstart', triggerGlobalAudio, { once: true });
-        window.addEventListener('keydown', triggerGlobalAudio, { once: true });
-
-        // Uptime Sayacı
+        // Uptime Sayacı (Optimize edilmiş)
         setInterval(() => {
             const diff = Math.floor((Date.now() - startTime) / 1000);
             const h = String(Math.floor(diff / 3600)).padStart(2, '0');
@@ -146,14 +121,14 @@
             metricUptime.textContent = h + ':' + m + ':' + s;
         }, 1000);
 
-        // WebSocket Bağlantısı
+        // Kararlı WebSocket Bağlantısı
         function connect() {
             const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
             ws = new WebSocket(proto + location.host);
 
             ws.onopen = () => {
-                document.getElementById('dot').className = "dot online";
-                document.getElementById('statusText').textContent = "Bağlantı Aktif";
+                dot.className = "dot online";
+                statusText.textContent = "Bağlantı Aktif";
             };
 
             ws.onmessage = (event) => {
@@ -162,18 +137,39 @@
                     if (data.t === 's') {
                         const players = data.p;
                         const keys = Object.keys(players);
-                        document.getElementById('metricPlayers').textContent = keys.length;
-                        document.getElementById('clientCounter').textContent = keys.length + ' Aktif';
+                        metricPlayers.textContent = keys.length;
+                        clientCounter.textContent = keys.length + ' Aktif';
 
                         if (keys.length > 0) {
                             let html = '';
-                            for (const id in players) {
+                            for (const id in keys) {
+                                const clientId = keys[id];
                                 html += '<tr>' +
-                                    '<td style="font-weight:700; color:#fca5a5;">' + id + '</td>' +
+                                    '<td style="font-weight:700; color:#fca5a5;">' + clientId + '</td>' +
                                     '<td style="color:#22c55e;">● Aktif</td>' +
                                     '<td style="color:#fca5a5; opacity:0.7;">Senkronize</td>' +
                                 '</tr>';
                             }
-                            document.getElementById('playerTableBody').innerHTML = html;
+                            playerTableBody.innerHTML = html;
                         } else {
-                            document.getElementById('playerTableBody').innerHTML = '<tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 30px
+                            playerTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #fca5a5; opacity: 0.6; padding: 30px;">Aktif bağlantı yok</td></tr>';
+                        }
+                    }
+                } catch (e) {}
+            };
+
+            ws.onclose = () => {
+                dot.className = "dot";
+                statusText.textContent = "Yeniden bağlanılıyor...";
+                setTimeout(connect, 3000);
+            };
+
+            ws.onerror = () => {
+                ws.close();
+            };
+        }
+
+        window.onload = connect;
+    </script>
+</body>
+</html>
