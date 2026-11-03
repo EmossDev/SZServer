@@ -22,7 +22,6 @@
         .metric-card::after { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #dc2626; }
         .metric-card label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #fca5a5; font-weight: 600; }
         
-        /* Sürekli sağa doğru akan akıcı animasyonlu gradient yazı */
         .metric-card .gradient-text { 
             font-size: 1.3rem; 
             font-weight: 800; 
@@ -42,7 +41,6 @@
             100% { background-position: 300% 0%; }
         }
 
-        /* Ortalanmış ve Birleştirilmiş Footer */
         .footer { 
             margin-top: auto; 
             display: flex; 
@@ -57,7 +55,6 @@
         }
         .footer span { color: #f87171; font-weight: bold; font-family: monospace; }
 
-        /* Yüzen Müzik Barı */
         .music-bar { 
             position: fixed; 
             bottom: 20px; 
@@ -152,7 +149,6 @@
         </div>
     </div>
 
-    <!-- Ortalanmış Footer -->
     <div class="footer">
         <div>Sector Zero Core</div>
         <span style="color: #7f1d1d;">&bull;</span>
@@ -298,12 +294,11 @@
                 document.getElementById('dot').className = "dot online";
                 document.getElementById('statusText').textContent = "Bağlantı Aktif";
 
-                // Canlı Ping (MS) Ölçüm Döngüsü
+                // Canlı Ping Gönderimi
+                if (pingInterval) clearInterval(pingInterval);
                 pingInterval = setInterval(() => {
                     if (ws.readyState === WebSocket.OPEN) {
-                        const pingStart = Date.now();
-                        // Sunucuya hafif bir ping paketi gönderiyoruz
-                        ws.send(JSON.stringify({ t: 'ping', time: pingStart }));
+                        ws.send(JSON.stringify({ t: 'ping', time: Date.now() }));
                     }
                 }, 2000);
             };
@@ -312,22 +307,19 @@
                 try {
                     const data = JSON.parse(event.data);
                     
-                    // Sunucudan gelen ping yanıtını hesapla
+                    // Pong Yanıtını Yakala ve MS Hesapla
                     if (data.t === 'pong') {
                         const latency = Date.now() - data.time;
                         const pingEl = document.getElementById('pingValue');
                         pingEl.textContent = latency + ' ms';
                         
-                        // Gecikme değerine göre renk değişimi (Yeşil / Sarı / Kırmızı)
                         if (latency < 100) pingEl.style.color = '#22c55e';
                         else if (latency < 250) pingEl.style.color = '#eab308';
                         else pingEl.style.color = '#ef4444';
                     }
 
                     if (data.t === 's') {
-                        const players = data.p;
-                        const keys = Object.keys(players);
-                        document.getElementById('metricPlayers').textContent = keys.length;
+                        document.getElementById('metricPlayers').textContent = Object.keys(data.p).length;
                     }
                 } catch (e) {}
             };
