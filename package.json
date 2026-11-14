@@ -1,7 +1,7 @@
 {
-  "name": "sector-zero-server",
+  "name": "szserver-control-center",
   "version": "1.0.0",
-  "description": "Sector Zero Multiplayer WebSocket Server",
+  "description": "Sector Zero Server Control Center",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -13,3 +13,4 @@
     "node": ">=18.x"
   }
 }
+
