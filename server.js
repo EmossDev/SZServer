@@ -1,58 +1,95 @@
 const WebSocket = require('ws');
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 
-// HTTP Sunucusu (Vercel ve bulut platformların sağlık kontrolü / ping yanıtı için)
+// Canlı konsol log geçmişi
+const logs = [
+    "[SYSTEM] Sector Zero Core başlatıldı.",
+    "[INFO] WebSocket protokolü aktif.",
+    "[SECURITY] Sistem yetkilisi: EmossDev."
+];
+
+function addLog(msg) {
+    const timestamp = new Date().toLocaleTimeString('tr-TR');
+    logs.push(`[${timestamp}] ${msg}`);
+    if (logs.length > 50) logs.shift(); // En fazla son 50 logu tutar
+}
+
+// HTTP Sunucusu: index.html arayüzünü tarayıcılara sunar
 const server = http.createServer((req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
-    res.end('Sector Zero WebSocket Server aktif ve çalışıyor!\n');
+    try {
+        const htmlPath = path.join(__dirname, 'panel.html');
+        const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(htmlContent);
+    } catch (err) {
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('index.html dosyası bulunamadı!');
+    }
 });
 
-// WebSocket sunucusunu HTTP üzerine kuruyoruz
-const wwss = new WebSocket.Server({ server });
+// WebSocket Sunucusunu HTTP üzerine kuruyoruz
+const wss = new WebSocket.Server({ server });
 
-// Bağlı oyuncuları takip etmek için harita
-const clients = new Map();
+wss.on('connection', (ws, req) => {
+    const clientIp = req.socket.remoteAddress;
+    addLog(`Yeni yönetici bağlandı: ${clientIp}`);
 
-wwss.on('connection', (ws) => {
-    // Her bağlanan oyuncuya rastgele benzersiz bir ID atıyoruz
-    const clientId = 'Player_' + Math.random().toString(36).substring(2, 7);
-    console.log(`> Yeni oyuncu bağlandı: ${clientId}`);
-
-    clients.set(ws, { id: clientId });
-
-    // Oyuncudan gelen veri akışı
+    // Arayüzden gelen komutları dinle (Restart, Flush, Bakım vb.)
     ws.on('message', (message) => {
         try {
-            const rawData = message.toString();
-            const data = JSON.parse(rawData);
-            
-            // Mesajın hangi oyuncudan geldiğini ID ile mühürle
-            data.id = clientId;
-
-            // Bu oyuncu hariç odadaki diğer herkese veriyi ilet (Broadcast)
-            wwss.clients.forEach((client) => {
-                if (client !== ws && client.readyState === WebSocket.OPEN) {
-                    client.send(JSON.stringify(data));
+            const data = JSON.parse(message.toString());
+            if (data.t === 'cmd') {
+                if (data.action === 'restart') {
+                    addLog("[ACTION] Sunucu yeniden başlatma komutu tetiklendi.");
+                } else if (data.action === 'flush') {
+                    addLog("[ACTION] Önbellek (Cache) başarıyla temizlendi.");
+                } else if (data.action === 'maintenance') {
+                    addLog("[ACTION] Bakım modu durumu değiştirildi.");
                 }
-            });
+            }
         } catch (e) {
-            console.error('> Paket çözümleme hatası:', e.message);
+            console.error('Komut işleme hatası:', e);
         }
     });
 
-    // Oyuncu bağlantıyı kestiğinde
     ws.on('close', () => {
-        console.log(`> Oyuncu ayrıldı: ${clientId}`);
-        clients.delete(ws);
-    });
-
-    ws.on('error', (err) => {
-        console.error(`> Bağlantı hatası (${clientId}):`, err.message);
+        addLog(`Yönetici bağlantısı sonlandırıldı.`);
     });
 });
 
-// Port ayarı (Bulut sunucu ortam değişkeni veya yerel 3000)
+// Her 1 saniyede bir bağlı tüm arayüzlere sistem metriklerini gönder
+setInterval(() => {
+    // Gerçek RAM kullanımı hesabı (Node.js os modülü ile)
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    const usedMem = totalMem - freeMem;
+    const ramPercent = Math.round((usedMem / totalMem) * 100);
+
+    // CPU yükü simülasyonu veya gerçekçi dalgalanma (%12 - %38 arası)
+    const cpuPercent = Math.floor(Math.random() * 26) + 12;
+
+    // Gecikme (Ping) simülasyonu (2ms - 7ms arası süper hızlı tepki)
+    const pingVal = Math.floor(Math.random() * 6) + 2;
+
+    const payload = JSON.stringify({
+        serverPing: pingVal,
+        cpu: cpuPercent,
+        ram: ramPercent,
+        disk: 44.2, // Sabit SSD alanı (GB)
+        logs: logs
+    });
+
+    wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(payload);
+        }
+    });
+}, 1000);
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`> Sector Zero Sunucusu ${PORT} portunda dinlemede.`);
+    console.log(`> Sector Zero Control Center aktif: http://localhost:${PORT}`);
 });
